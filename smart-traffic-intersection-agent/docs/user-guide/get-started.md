@@ -60,8 +60,8 @@ its identifier before running setup:
 export VLM_MODEL_NAME="<supported_model_name>"
 ```
 
-Setup rejects an unset or empty `VLM_MODEL_NAME`. The same requirement applies to Makefile
-deployment commands. The application has been validated with the following models:
+Setup rejects an unset or empty `VLM_MODEL_NAME`. The application has been validated
+with the following models:
 
 | Model | `VLM_MODEL_NAME` |
 |-------|-----------------|
@@ -87,8 +87,8 @@ source setup.sh --setup
 ```
 
 When `VLM_TARGET_DEVICE` is unset or empty, setup selects `GPU` if an Intel GPU render
-device is present on the host; otherwise it selects `CPU`. The same selection applies to
-Makefile deployment commands. An explicit `VLM_TARGET_DEVICE` value is preserved.
+device is present on the host; otherwise it selects `CPU`.
+An explicit `VLM_TARGET_DEVICE` value is preserved.
 GPU selection also chooses the GPU-enabled OVMS image and sets `TC_SI_TARGET_DEVICE=CPU`
 before starting Smart Intersection to avoid assigning the GPU to both workloads.
 This detects hardware presence, not successful model compilation; GPU driver and model
@@ -192,7 +192,7 @@ locations on the same machine for `n` required instances.
 3. Choose a supported model and set the required environment variable.
 
    ```bash
-   export VLM_MODEL_NAME="<supported_model_name>"
+   export VLM_MODEL_NAME="<supported_model_name>" # eg. OpenVINO/Phi-3.5-vision-instruct-int8-ov, OpenVINO/Qwen2-VL-2B-Instruct-int4-ov
    ```
 
    > [!NOTE]
@@ -240,7 +240,7 @@ locations on the same machine for `n` required instances.
 3. Choose a supported model and set the required environment variable.
 
    ```bash
-   export VLM_MODEL_NAME="<supported_model_name>"
+   export VLM_MODEL_NAME="<supported_model_name>" # eg. OpenVINO/Phi-3.5-vision-instruct-int8-ov, OpenVINO/Qwen2-VL-2B-Instruct-int4-ov
    ```
 
    > [!NOTE]

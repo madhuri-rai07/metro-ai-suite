@@ -25,11 +25,9 @@
 
 **Improved**:
 
-- Setup script and Makefile deployments now select GPU for VLM inference when an Intel GPU
+- Setup script deployments now select GPU for VLM inference when an Intel GPU
   render device is detected, otherwise CPU. Explicit device selections are preserved.
   GPU selection sets Smart Intersection to CPU before startup to avoid accelerator contention.
-- Removed the default VLM model selection from Makefile deployments. Users must
-  explicitly select a model; setup reports an error when no model is provided.
 - Clarified that public, ungated models do not require a Hugging Face account or token.
   Authentication instructions apply only to gated or private models.
 

@@ -20,8 +20,8 @@
 #   TAG                         - Image tag (default: latest)
 #   REGISTRY                    - Image registry (default: empty)
 #   LOG_LEVEL                   - Logging level (default: INFO)
-#   VLM_MODEL_NAME              - Required user-selected VLM model (no default)
-#   VLM_TARGET_DEVICE           - Inference device (default: GPU if detected, otherwise CPU)
+#   VLM_MODEL_NAME              - VLM model (default: OpenVINO/Phi-3.5-vision-instruct-int8-ov)
+#   VLM_TARGET_DEVICE           - Inference device (default: CPU)
 #
 # ==============================================================================
 
@@ -56,7 +56,7 @@ traffic-agent_DOCKERFILE := ./src/Dockerfile
 traffic-agent_LANG := python
 
 # OVMS dependency (pre-built, not built by this Makefile)
-OVMS_IMAGE := openvino/model_server:2026.4.0
+OVMS_IMAGE := openvino/model_server:2026.1
 
 # ==============================================================================
 # Deployment Configuration
@@ -71,8 +71,8 @@ COMPOSE_FILE := docker/agent-compose.yaml
 PROJECT_NAME ?= trafficagent
 
 # VLM / OVMS Configuration
-VLM_MODEL_NAME ?=
-VLM_TARGET_DEVICE ?=
+VLM_MODEL_NAME ?= OpenVINO/Phi-3.5-vision-instruct-int8-ov
+VLM_TARGET_DEVICE ?= CPU
 VLM_WEIGHT_FORMAT ?=
 VLM_MAX_COMPLETION_TOKENS ?= 1500
 
@@ -148,8 +148,8 @@ define DEPLOY_BANNER
 	@echo "  PROJECT_NAME:              $${PROJECT_NAME:-$(PROJECT_NAME)}"
 	@echo ""
 	@echo "  VLM / OVMS Configuration:"
-	@echo "  VLM_MODEL_NAME:            $${VLM_MODEL_NAME:-$(or $(VLM_MODEL_NAME),(required))}"
-	@echo "  VLM_TARGET_DEVICE:         $${VLM_TARGET_DEVICE:-$(or $(VLM_TARGET_DEVICE),auto)}"
+	@echo "  VLM_MODEL_NAME:            $${VLM_MODEL_NAME:-$(VLM_MODEL_NAME)}"
+	@echo "  VLM_TARGET_DEVICE:         $${VLM_TARGET_DEVICE:-$(VLM_TARGET_DEVICE)}"
 	@echo "  VLM_WEIGHT_FORMAT:         $${VLM_WEIGHT_FORMAT:-$(VLM_WEIGHT_FORMAT)}"
 	@echo "  VLM_MAX_COMPLETION_TOKENS: $${VLM_MAX_COMPLETION_TOKENS:-$(VLM_MAX_COMPLETION_TOKENS)}"
 	@echo ""
@@ -609,11 +609,11 @@ help:
 	@echo "    PROJECT_NAME                 Docker compose project name (default: trafficagent)"
 	@echo ""
 	@echo "    VLM / OVMS Configuration:"
-	@echo "    VLM_MODEL_NAME               Required user-selected VLM model (no default)"
-	@echo "    VLM_TARGET_DEVICE            CPU or GPU (default: GPU if detected, otherwise CPU)"
+	@echo "    VLM_MODEL_NAME               VLM model (default: OpenVINO/Phi-3.5-vision-instruct-int8-ov)"
+	@echo "    VLM_TARGET_DEVICE            CPU or GPU (default: CPU)"
 	@echo "    VLM_WEIGHT_FORMAT            int4, int8, or empty for auto (default: auto)"
 	@echo "    VLM_MAX_COMPLETION_TOKENS    Max tokens (default: 1500)"
-	@echo "    HUGGINGFACE_TOKEN            Required only for gated/private models"
+	@echo "    HUGGINGFACE_TOKEN            HuggingFace API token (required)"
 	@echo ""
 	@echo "    Traffic Agent:"
 	@echo "    HIGH_DENSITY_THRESHOLD       High density vehicle count (default: 10)"
@@ -643,14 +643,14 @@ help:
 	@echo ""
 	@echo "EXAMPLES"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "  # Choose a supported model, then replace the placeholder below"
-	@echo "  VLM_MODEL_NAME=\"<supported_model_name>\" make deploy-build"
+	@echo "  # Build and deploy with default settings"
+	@echo "  HUGGINGFACE_TOKEN=hf_xxx make deploy-build"
 	@echo ""
 	@echo "  # Deploy with GPU acceleration"
-	@echo "  VLM_MODEL_NAME=\"<supported_model_name>\" VLM_TARGET_DEVICE=GPU make deploy-build"
+	@echo "  VLM_TARGET_DEVICE=GPU HUGGINGFACE_TOKEN=hf_xxx make deploy-build"
 	@echo ""
-	@echo "  # Deploy the chosen model using pre-built images"
-	@echo "  VLM_MODEL_NAME=\"<supported_model_name>\" make deploy"
+	@echo "  # Deploy with custom VLM model"
+	@echo "  VLM_MODEL_NAME=OpenVINO/InternVL2-1B-int4-ov make deploy"
 	@echo ""
 	@echo "  # Run all security scans"
 	@echo "  make trivy-scan bandit-scan gitleaks-scan codeql-scan"
