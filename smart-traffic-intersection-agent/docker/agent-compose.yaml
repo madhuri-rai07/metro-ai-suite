@@ -20,6 +20,8 @@ services:
     restart: unless-stopped
     devices:
       - /dev/dri:/dev/dri
+    # video/render GIDs differ across Ubuntu releases (22.04/24.04/26.04);
+    # setup.sh resolves them from the host, the defaults are only a fallback.
     group_add:
       - ${USER_GROUP_ID:-1000}
       - ${VIDEO_GROUP_ID:-44}
@@ -126,7 +128,7 @@ services:
 
   # Metrics Manager - unified service for host telemetry and custom STIA metrics
   metrics-manager:
-    image: ${METRICS_MANAGER_IMAGE:-intel/metrics-manager}:${METRICS_MANAGER_TAG:-2026.2.0-20260715-weekly}
+    image: ${METRICS_MANAGER_IMAGE:-intel/metrics-manager}:${METRICS_MANAGER_TAG:-2026.3.0-extended-rc1}
     environment:
       no_proxy: localhost,127.0.0.1,traffic-agent,ovms-service,metrics-manager,${no_proxy:-${NO_PROXY:-}}
       NO_PROXY: localhost,127.0.0.1,traffic-agent,ovms-service,metrics-manager,${NO_PROXY:-${no_proxy:-}}

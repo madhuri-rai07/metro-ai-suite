@@ -6,7 +6,9 @@ The agent currently supports CPU- and GPU-based runs, and runs in the context of
 
 ## Supported Operating Systems
 
-- Ubuntu 22.04 LTS or later
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+- Ubuntu 26.04 LTS
 - Other Linux distributions with Docker support
 
 ## Hardware Requirements
