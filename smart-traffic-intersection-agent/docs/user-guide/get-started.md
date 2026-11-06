@@ -28,7 +28,7 @@ gated or private model, obtain the necessary model access and set an authorized 
 
   ```bash
   export REGISTRY="intel"
-  export TAG="latest"
+  export TAG="2026.3.0-rc1"
   ```
 
 ## Quick Start with Setup Script
@@ -44,7 +44,7 @@ If you want to clone a specific release branch, replace `main` with the desired 
 To learn more on partial cloning, check the [Repository Cloning guide](https://docs.openedgeplatform.intel.com/dev/OEP-articles/contribution-guide.html#repository-cloning-partial-cloning).
 
 ```bash
-git clone --filter=blob:none --sparse --branch main https://github.com/open-edge-platform/metro-ai-suite.git
+git clone --filter=blob:none --sparse --branch release-2026.3.0 https://github.com/open-edge-platform/metro-ai-suite.git
 cd metro-ai-suite
 git sparse-checkout set smart-traffic-intersection-agent/
 cd smart-traffic-intersection-agent/
