@@ -17,7 +17,7 @@ platform, see [Docker Documentation](https://docs.docker.com/) for an introducti
    To learn more on partial cloning, check the [Repository Cloning guide](https://docs.openedgeplatform.intel.com/dev/OEP-articles/contribution-guide.html#repository-cloning-partial-cloning).
 
    ```bash
-   git clone --filter=blob:none --sparse --branch main https://github.com/open-edge-platform/metro-ai-suite.git
+   git clone --filter=blob:none --sparse --branch release-2026.3.0 https://github.com/open-edge-platform/metro-ai-suite.git
    cd metro-ai-suite
    git sparse-checkout set smart-route-planning-agent
    cd smart-route-planning-agent
@@ -53,7 +53,7 @@ platform, see [Docker Documentation](https://docs.docker.com/) for an introducti
 
     ```bash
     export REASONING_MODEL_NAME=<model-name>    # e.g. OpenVINO/Qwen3.6-35B-A3B-int4-ov, OpenVINO/Qwen3.5-9B-int8-ov, OpenVINO/Qwen2.5-14B-Instruct-int4-ov
-    export TAG=latest   # Make sure TAG is set to latest to pull the latest image.
+    export TAG=2026.3.0-rc1
     ```
 
 4. **Run the _Smart Route Planning Agent_ along with all dependencies :**

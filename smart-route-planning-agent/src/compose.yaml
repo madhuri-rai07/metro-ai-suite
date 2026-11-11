@@ -41,7 +41,7 @@ services:
 
   # Provides Intel hardware info (CPU / GPU / NPU) shown at the top of the UI.
   metrics-manager:
-    image: intel/metrics-manager:2026.2.0
+    image: intel/metrics-manager:2026.3.0-rc1
     privileged: true
     volumes:
       - /sys:/sys
