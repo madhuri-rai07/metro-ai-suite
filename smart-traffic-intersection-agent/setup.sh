@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2026 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 # Color codes for terminal output
@@ -62,12 +62,26 @@ export AGENT_UI_PORT=$(grep -oP '"agent_ui_port"\s*:\s*"\K[^"]+' "$DEPLOYMENT_CO
 export SAMPLE_APP="smart-intersection"
 CLONE_DIR="deps/metro-vision"
 CLONE_PATH="$APP_DIR/$CLONE_DIR"
-export DEPS_DIR="$CLONE_PATH/metro-ai-suite/metro-vision-ai-app-recipe"
-export RI_DIR="$DEPS_DIR/$SAMPLE_APP"
+resolve_dependency_paths() {
+    local subdir
+    DEPENDENCY_SUBDIR="metro-vision-ai-app-recipe"
+    if [ -e "$CLONE_PATH/.git" ]; then
+        for subdir in metro-vision-ai-app-recipe metro-ai-suite/metro-vision-ai-app-recipe; do
+            if git -C "$CLONE_PATH" cat-file -e "HEAD:$subdir/$SAMPLE_APP/install.sh" 2>/dev/null; then
+                DEPENDENCY_SUBDIR="$subdir"
+                break
+            fi
+        done
+    fi
+    export DEPS_DIR="$CLONE_PATH/$DEPENDENCY_SUBDIR"
+    export RI_DIR="$DEPS_DIR/$SAMPLE_APP"
+}
+
+resolve_dependency_paths
 export OVMS_CONFIG_DIR="${APP_DIR}/.ovms"
 export STIA_OVERRIDES_DIR="${APP_DIR}/src/config/smart-intersection-overrides"
-export SI_SETUP_REPO_URL="${SI_SETUP_REPO_URL:-https://github.com/open-edge-platform/edge-ai-suites.git}"
-export SI_SETUP_BRANCH="${SI_SETUP_BRANCH:-release-2026.2.0}"
+export SI_SETUP_REPO_URL="${SI_SETUP_REPO_URL:-https://github.com/open-edge-platform/metro-ai-suite.git}"
+export SI_SETUP_BRANCH="${SI_SETUP_BRANCH:-release-2026.3.0}"
 export RTSP_STREAM_IP="${RTSP_STREAM_IP:-${SI_RTSP_HOST:-}}"
 export RTSP_STREAM_PORT="${RTSP_STREAM_PORT:-8554}"
 
@@ -248,7 +262,7 @@ elif [ "$1" = "--stop" ] || [ "$1" = "--clean" ]; then
         fi
 
         rm -f "${APP_DIR}/docker/tc-resolv.conf" 2>/dev/null || true
-        rm -f "${APP_DIR}/deps/metro-vision/metro-ai-suite/metro-vision-ai-app-recipe/tc-resolv.conf" 2>/dev/null || true
+        rm -f "$DEPS_DIR/tc-resolv.conf" 2>/dev/null || true
 
         echo -e "${GREEN}Cleanup completed successfully. ${NC}"
     fi
@@ -326,31 +340,42 @@ apply_stia_overrides() {
     fi
 }
 
-# Verify if dependencies are setup; if not, clone the required dependency and run install script
-check_and_setup_dependencies() {
-    echo -e "${BLUE}==> Setting up required dependencies ...${NC}"
-
-    if [ ! -d "$DEPS_DIR" ]; then
-        # Run git clone to fetch the dependencies (sparse, shallow)
+prepare_dependency_checkout() {
+    if [ ! -e "$CLONE_PATH/.git" ]; then
         echo -e "${YELLOW}Dependencies not found. Cloning repository...${NC}"
-        git clone --filter=blob:none --sparse --depth 1 \
+        if ! git clone --filter=blob:none --sparse --depth 1 \
             --branch "$SI_SETUP_BRANCH" \
             "$SI_SETUP_REPO_URL" \
-            "$CLONE_PATH"
-        git -C "$CLONE_PATH" sparse-checkout set metro-ai-suite/metro-vision-ai-app-recipe
-
-        # Verify if the git commands were successful
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to clone and set up dependencies${NC}"
+            "$CLONE_PATH"; then
+            echo -e "${RED}Failed to clone dependencies. Check SI_SETUP_REPO_URL, SI_SETUP_BRANCH, and the destination $CLONE_PATH. Existing files were not removed.${NC}"
             return 1
         fi
     fi
 
-    # Check if install.sh exists
+    resolve_dependency_paths
+    if ! git -C "$CLONE_PATH" cat-file -e "HEAD:$DEPENDENCY_SUBDIR/$SAMPLE_APP/install.sh" 2>/dev/null; then
+        echo -e "${RED}Dependency checkout does not contain $SAMPLE_APP/install.sh in a supported layout. Check its repository and revision at $CLONE_PATH.${NC}"
+        return 1
+    fi
+
+    # Repair an incomplete sparse checkout without recloning or discarding local changes.
+    if [ ! -f "$RI_DIR/install.sh" ]; then
+        if ! git -C "$CLONE_PATH" sparse-checkout add "$DEPENDENCY_SUBDIR"; then
+            echo -e "${RED}Failed to populate dependency checkout at $CLONE_PATH. Existing files were not removed.${NC}"
+            return 1
+        fi
+    fi
+
     if [ ! -f "$RI_DIR/install.sh" ]; then
         echo -e "${RED}Installation script not found for dependency : $SAMPLE_APP ${NC}"
         return 1
     fi
+}
+
+# Verify if dependencies are setup; if not, clone the required dependency and run install script
+check_and_setup_dependencies() {
+    echo -e "${BLUE}==> Setting up required dependencies ...${NC}"
+    prepare_dependency_checkout || return 1
 
     # Ensure all required secrets are generated
     if [ -f "$RI_DIR/src/secrets/browser.auth" ] && [ ! -f "$RI_DIR/src/secrets/pgserver/pgserver.env" ]; then
@@ -360,11 +385,8 @@ check_and_setup_dependencies() {
 
     # Run the installation script
     echo -e "${BLUE}==> Running installation script for smart-intersection...${NC}"
-    #cd $RI_DIR && ./install.sh && cd - > /dev/null
-    cd $RI_DIR && ./install.sh && cd -
-    if [ $? -ne 0 ]; then
+    if ! (cd "$RI_DIR" && ./install.sh); then
         echo -e "${RED}Failed to run install.sh for smart-intersection${NC}"
-        cd - > /dev/null
         return 1
     fi
     echo -e "${GREEN}Installation script completed successfully${NC}"
