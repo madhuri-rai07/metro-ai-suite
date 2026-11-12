@@ -1,27 +1,32 @@
 {
   "thresholds": {
-    "Rupture": {
-      "alert_above": 0.6,
-      "description": "Pipeline wall rupture — immediate shutdown risk"
-    },
-    "Deformation": {
+    "gas-pipelines": {
       "alert_above": 0.7,
-      "description": "Structural deformation — schedule inspection"
+      "description": "Pipeline context only; not proof of damage or normal operation"
     },
-    "Disconnect": {
-      "alert_above": 0.65,
-      "description": "Pipeline segment disconnection — high risk"
+    "deformation": {
+      "alert_above": 0.7,
+      "description": "Candidate deformation; qualified human review required"
     },
-    "Obstacle": {
-      "alert_above": 0.8,
-      "description": "Foreign obstacle in pipeline — monitor"
+    "corrosion": {
+      "alert_above": 0.7,
+      "description": "Candidate corrosion; qualified human review required"
+    },
+    "coating degradation": {
+      "alert_above": 0.7,
+      "description": "Candidate coating degradation; low reported model score, human review required"
+    },
+    "deformations": {
+      "alert_above": 0.7,
+      "description": "Separate model class; positive behavior unverified, human review required"
     }
   },
   "actions": {
-    "Rupture":     "HALT_PIPELINE",
-    "Disconnect":  "HALT_PIPELINE",
-    "Deformation": "SCHEDULE_MAINTENANCE",
-    "Obstacle":    "MONITOR"
+    "gas-pipelines": "MONITOR",
+    "deformation": "MONITOR",
+    "corrosion": "MONITOR",
+    "coating degradation": "MONITOR",
+    "deformations": "MONITOR"
   },
   "default_action": "MONITOR"
 }

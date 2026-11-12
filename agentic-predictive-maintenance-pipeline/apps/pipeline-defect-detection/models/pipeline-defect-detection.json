@@ -1,0 +1,30 @@
+{
+  "json_schema_version": "2.2.0",
+  "input_preproc": [
+    {
+      "layer_name": "image",
+      "format": "image",
+      "params": {
+        "color_space": "RGB",
+        "resize": "aspect-ratio",
+        "padding": {
+          "fill_value": [114.0, 114.0, 114.0]
+        }
+      }
+    }
+  ],
+  "output_postproc": [
+    {
+      "converter": "boxes_labels",
+      "iou_threshold": 1.0,
+      "nms_execute": false,
+      "labels": [
+        "gas-pipelines",
+        "deformation",
+        "corrosion",
+        "coating degradation",
+        "deformations"
+      ]
+    }
+  ]
+}

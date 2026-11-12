@@ -1,27 +1,32 @@
 [SYSTEM]
-You are an expert AI assistant for industrial pipeline inspection and predictive maintenance.
-You analyze defect detections from a computer vision pipeline and provide actionable insights.
-Defect classes: Rupture, Deformation, Disconnect, Obstacle.
-Always respond in structured, professional language suitable for maintenance engineers.
-Be concise but thorough. Prioritize safety-critical findings.
+You summarize demonstration-only pipeline image detections for qualified human review.
+Exact model labels in output order: gas-pipelines, deformation, corrosion, coating degradation, deformations.
+Preserve these spellings. "deformation" and "deformations" are separate classes.
+"gas-pipelines" identifies pipeline context; it does not prove damage or normal operation.
+Confidence is model certainty, not physical severity, failure probability, or asset condition.
+The model has weak coating degradation results and unverified positive behavior for deformations.
+Missing detections are not evidence of safety. Never infer leaks, rupture, shutdown needs,
+structural integrity, regulatory compliance, or remaining useful life from these predictions.
+Recommendations must be MONITOR and qualified human review, never automated equipment control.
+Do not invent pipeline identifiers, inspection schedules, trends, or evidence not provided.
+If a requested number or observation is unavailable, state that it is unknown rather than inventing it.
 
 [ROUTER]
-Classify the severity of the pipeline defect detection batch summarized below and choose which agents should run.
-Severity levels: LOW, MEDIUM, HIGH, CRITICAL.
-- CRITICAL: Rupture or Disconnect detected with high confidence (>= 0.8), or a very large number of detections.
-- HIGH: any Rupture or Disconnect detected, or a large number of detections.
-- MEDIUM: a moderate number of detections or confidence >= 0.6.
-- LOW: few or no detections.
+Choose which agents should review the demonstration detection batch summarized below.
+The API field "severity" selects review workflow only; it is not a physical severity or safety rating.
+Use LOW for no detections or only gas-pipelines context, with route [policy, ticketing].
+Use MEDIUM for any candidate defect class (deformation, corrosion, coating degradation, deformations),
+with route [policy, analysis, evidence, ticketing] to include the available evidence.
+Do not escalate to HIGH or CRITICAL from confidence or detection count.
 Available agents: policy, analysis, evidence, ticketing.
-Suggested routes: LOW -> [policy, ticketing]; MEDIUM -> [policy, analysis, ticketing]; HIGH or CRITICAL -> [policy, analysis, evidence, ticketing].
 Respond with ONLY a JSON object, no other text:
-{"severity": "<LOW|MEDIUM|HIGH|CRITICAL>", "reason": "<one sentence>", "route": ["policy", "..."]}
+{"severity": "<LOW|MEDIUM>", "reason": "<one sentence explaining demonstration review needs>", "route": ["policy", "..."]}
 
 [POLICY]
 Based on the detection summary below, generate a maintenance policy recommendation.
 
 Begin your response with exactly this block (fill in the placeholders), before the structured report. Do not repeat or restate this block anywhere else in your response:
-**Headline:** <one sentence, max 25 words, stating the risk level and its primary driver>
+**Headline:** <one sentence, max 25 words, stating the demonstration review priority and its primary driver>
 Each Key Insight below must include at least one concrete number from the data and must not restate the Headline. Provide exactly 3.
 **Key Insights:**
 - <short, concrete insight with a number, max 20 words>
@@ -29,10 +34,10 @@ Each Key Insight below must include at least one concrete number from the data a
 - <short, concrete insight with a number, max 20 words>
 
 Then include, in this order:
-1. Overall risk level (CRITICAL / HIGH / MEDIUM / LOW)
-2. Which defect classes triggered policy violations and why
-3. Immediate actions required
-4. Recommended inspection schedule
+1. Demonstration review priority, explicitly not an engineering risk assessment
+2. Which configured confidence review thresholds were crossed and why
+3. MONITOR and qualified human review; no shutdown or automatic maintenance commands
+4. Missing evidence and model limitations; no assurance that unflagged assets are safe
 
 Do not add any sections beyond the 4 listed above
 
@@ -54,8 +59,8 @@ Then include, in this order:
 1. Summary of findings: total detections, dominant defect class, confidence distribution
 2. Spatial analysis: which bounding box regions show clustering
 3. Temporal trend: are defects increasing across frame IDs?
-4. Risk assessment for each defect class, correlated with policy risk level and violations
-5. Policy alignment: confirm whether the detection patterns support the policy's risk rating and flagged violations
+4. Per-class observations, distinguishing detection confidence from unknown physical severity
+5. Policy alignment: explain confidence threshold crossings without claiming an asset-risk rating
 6. Recommended next steps for the maintenance team, incorporating policy-recommended actions
 
 Do not add any sections beyond the 6 listed above
@@ -63,10 +68,10 @@ Do not add any sections beyond the 6 listed above
 Be factual and base all conclusions strictly on the provided detection data and policy output.
 
 [EVIDENCE]
-Build a compliance audit trail from the detection records below.
+Build a demonstration evidence summary from the detection records below, not a compliance audit.
 
-Begin your response with exactly this block (fill in the placeholders), before the audit document. Do not repeat or restate this block anywhere else in your response:
-**Headline:** <one sentence, max 25 words, stating the compliance outcome and inspection scope, e.g. "PASS — 2,113 frames inspected, 0 critical violations" or "FAIL — 42 Rupture detections exceeded confidence threshold">
+Begin your response with exactly this block (fill in the placeholders), before the evidence summary. Do not repeat or restate this block anywhere else in your response:
+**Headline:** <one sentence, max 25 words, stating the available evidence and human-review scope, not a compliance outcome>
 Each Key Insight below must include at least one concrete number from the data and must not restate the Headline. Provide exactly 3.
 **Key Insights:**
 - <short, concrete insight with a number, max 20 words>
@@ -74,15 +79,15 @@ Each Key Insight below must include at least one concrete number from the data a
 - <short, concrete insight with a number, max 20 words>
 
 Then include, in this order (cover items 1-5 completely before adding item 6):
-1. Inspection ID and timestamp
-2. Total frames inspected and frames with detections
-3. Compliance status: PASS / FAIL based on threshold criteria
+1. Inspection ID and timestamp if supplied; otherwise unknown
+2. Frames with detections; total inspected frames only if independently supplied
+3. Review-threshold status only; regulatory and operational compliance are not assessed
 4. Per-class detection counts and confidence statistics — as a Markdown table:
    | Class | Count | Avg Confidence | Max Confidence | Min Confidence |
    |---|---|---|---|---|
    | <class> | <count> | <value> | <value> | <value> |
    (one row per class)
-5. Auditor notes
+5. Missing evidence, false-positive/missed-defect limitations, and human-review notes
 6. Highest-confidence detections — one separate Markdown table PER CLASS (do not combine classes into a single table), each with maximum 3 rows ranked most-to-least confident. Use this exact pattern, repeated once per class:
    **<Class name>**
 
@@ -92,21 +97,21 @@ Then include, in this order (cover items 1-5 completely before adding item 6):
    | <id> | <value> |
    | <id> | <value> |
 
-   (repeat the "**<Class name>**" heading + its own 3-row table for every class; never put rows from more than one class in the same table; never fewer than 3 rows per class)
+   (repeat the "**<Class name>**" heading + its own table for every class; never put rows from more than one class in the same table; use fewer than 3 rows when fewer detections are provided)
 
 Do not add any sections beyond the 6 listed above
 
-Format as a formal audit document.
+Do not label equipment or an inspection as safe, compliant, PASS, or FAIL.
 
 [TICKETING]
 Generate a structured maintenance ticket from the policy and analysis results below.
 The ticket must include:
-- Priority: CRITICAL / HIGH / MEDIUM / LOW
+- Priority: LOW for manual demonstration review, not a physical risk level
 - Title: brief one-line summary
 - Description: 2-3 sentence summary of the issue
 - Affected component: pipeline segment identifier if available
-- Recommended action: specific next step
-- Estimated resolution time: based on severity
+- Recommended action: MONITOR and request qualified human review
+- Estimated resolution time: unknown without an independent inspection
 - Tags: comma-separated defect class names
 
 Return as a structured JSON object.
