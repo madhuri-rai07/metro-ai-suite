@@ -635,6 +635,7 @@ ovms_config_has_model() {
 
 # Export and convert a model for OVMS using the model-download ephemeral container.
 # Replaces the previous host-side python venv + export_model.py approach.
+# Keep diagnostics on stderr: stdout is captured as the model identifier.
 export_model_for_ovms() {
     local source_model="$1"
     local target_device="$2"
@@ -642,7 +643,7 @@ export_model_for_ovms() {
     local storage_model_name
 
     if [ -z "$source_model" ]; then
-        echo -e "${RED}ERROR: Missing source model for OVMS export.${NC}"
+        echo -e "${RED}ERROR: Missing source model for OVMS export.${NC}" >&2
         return 1
     fi
 
@@ -652,12 +653,12 @@ export_model_for_ovms() {
 
     local get_model_script="${OVMS_CONFIG_DIR}/get_model.sh"
 
-    echo -e "${BLUE}==> Fetching get_model.sh from edge-ai-libraries...${NC}"
+    echo -e "${BLUE}==> Fetching get_model.sh from edge-ai-libraries...${NC}" >&2
     curl -fsSL "https://raw.githubusercontent.com/open-edge-platform/edge-ai-libraries/main/microservices/model-download/scripts/get_model.sh" \
-        -o "$get_model_script" || { echo -e "${RED}ERROR: Failed to download get_model.sh${NC}"; return 1; }
+        -o "$get_model_script" || { echo -e "${RED}ERROR: Failed to download get_model.sh${NC}" >&2; return 1; }
     chmod +x "$get_model_script"
 
-    echo -e "${BLUE}==> Downloading/converting model via model-download ephemeral container...${NC}"
+    echo -e "${BLUE}==> Downloading/converting model via model-download ephemeral container...${NC}" >&2
 
     # Pass HuggingFace token via env var if set
     if [ -n "${HUGGINGFACE_TOKEN:-}" ]; then
@@ -672,19 +673,19 @@ export_model_for_ovms() {
         --precision "$weight_format" \
         --device "$target_device" \
         --model-path "${OVMS_CONFIG_DIR}/models" \
-        --plugins openvino
+        --plugins openvino >&2
 
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
-        echo -e "${RED}ERROR: Model download/conversion failed for '${source_model}' (exit code: ${exit_code}).${NC}"
+        echo -e "${RED}ERROR: Model download/conversion failed for '${source_model}' (exit code: ${exit_code}).${NC}" >&2
         local log_dir="${PWD}/.model_download_logs"
         local latest_log
         latest_log=$(ls -t "${log_dir}"/model_download_*.log 2>/dev/null | head -1)
         if [ -n "$latest_log" ]; then
-            echo -e "${YELLOW}==> Last 30 lines from log: ${latest_log}${NC}"
-            tail -30 "$latest_log"
+            echo -e "${YELLOW}==> Last 30 lines from log: ${latest_log}${NC}" >&2
+            tail -30 "$latest_log" >&2
         else
-            echo -e "${YELLOW}No model download log found in: ${log_dir}${NC}"
+            echo -e "${YELLOW}No model download log found in: ${log_dir}${NC}" >&2
         fi
         return 1
     fi
@@ -701,7 +702,7 @@ export_model_for_ovms() {
         config_rel_dir=$(dirname "${generated_config#${models_root}/}")
 
         # Prefix every base_path value with the directory that config_all.json lives in
-        python3 - "${generated_config}" "${config_rel_dir}" "${models_root}/config.json" << 'PYEOF'
+        python3 - "${generated_config}" "${config_rel_dir}" "${models_root}/config.json" >&2 << 'PYEOF'
 import json, sys
 
 src, prefix, dst = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -716,9 +717,9 @@ with open(dst, "w") as f:
     json.dump(cfg, f, indent=4)
 print(f"Created {dst} with {len(cfg['model_config_list'])} model(s)")
 PYEOF
-        echo -e "${GREEN}==> Created config.json from ${generated_config}${NC}"
+        echo -e "${GREEN}==> Created config.json from ${generated_config}${NC}" >&2
     else
-        echo -e "${YELLOW}WARNING: Could not find generated config_all.json under ${models_root}/openvino_models. OVMS may not start.${NC}"
+        echo -e "${YELLOW}WARNING: Could not find generated config_all.json under ${models_root}/openvino_models. OVMS may not start.${NC}" >&2
     fi
 
     echo "$source_model"
@@ -730,13 +731,13 @@ ensure_ovms_model() {
     local weight_format="$3"
     local ovms_model_config="${OVMS_CONFIG_DIR}/models/config.json"
 
-    echo -e "[ovms-service] ${BLUE}Checking for model: ${YELLOW}${model_name}${NC}"
+    echo -e "[ovms-service] ${BLUE}Checking for model: ${YELLOW}${model_name}${NC}" >&2
 
     if [ -f "${ovms_model_config}" ] && ovms_config_has_model "${ovms_model_config}" "${model_name}"; then
-        echo -e "[ovms-service] ${GREEN}Model ${YELLOW}${model_name}${GREEN} already registered in OVMS config. Skipping export.${NC}"
+        echo -e "[ovms-service] ${GREEN}Model ${YELLOW}${model_name}${GREEN} already registered in OVMS config. Skipping export.${NC}" >&2
         echo "$model_name"
     else
-        echo -e "[ovms-service] ${YELLOW}Model ${RED}${model_name}${YELLOW} not found. Exporting...${NC}"
+        echo -e "[ovms-service] ${YELLOW}Model ${RED}${model_name}${YELLOW} not found. Exporting...${NC}" >&2
 
         export_model_for_ovms \
             "$model_name" \
