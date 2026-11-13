@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for setup script defaults without deploying services."""
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -117,6 +118,95 @@ def test_setup_automatically_selects_host_device(device):
     selected, image_tag, detected = result.stdout.splitlines()
     assert selected == detected
     assert image_tag == ("2026.4.0-gpu" if detected == "GPU" else "2026.4.0")
+
+
+@pytest.mark.parametrize(
+    ("fetch_status", "download_status", "with_log"),
+    [(22, 0, False), (0, 23, True), (0, 23, False), (0, 0, False)],
+)
+def test_model_preparation_diagnostics(
+    tmp_path, fetch_status, download_status, with_log
+):
+    helper = tmp_path / "helper.sh"
+    helper.write_text(
+        "#!/bin/bash\n"
+        "# SPDX-FileCopyrightText: (C) 2026 Intel Corporation\n"
+        "# SPDX-License-Identifier: Apache-2.0\n"
+        "set -euo pipefail\n"
+        "echo 'Downloader progress'\n"
+        "echo 'Downloader stderr' >&2\n"
+        f"exit {download_status}\n"
+    )
+    models = tmp_path / ".ovms/models"
+    generated = models / "openvino_models/cpu/int8/config_all.json"
+    generated.parent.mkdir(parents=True)
+    generated.write_text(
+        json.dumps(
+            {
+                "model_config_list": [
+                    {"config": {"name": "test/model", "base_path": "test/model"}}
+                ]
+            }
+        )
+    )
+    if with_log:
+        log_dir = tmp_path / ".model_download_logs"
+        log_dir.mkdir()
+        (log_dir / "model_download_test.log").write_text("Download failure details\n")
+
+    failed = bool(fetch_status or download_status)
+    command = (
+        'cd "$2" && export OVMS_CONFIG_DIR="$PWD/.ovms"; '
+        + (
+            f"curl() {{ return {fetch_status}; }}; "
+            if fetch_status
+            else 'curl() { cp "$PWD/helper.sh" "$4"; }; '
+        )
+        + 'prepare_ovms_model && printf "MODEL=<%s>\\n" "$VLM_STORAGE_MODEL_NAME"'
+    )
+    result = run_setup(
+        command,
+        env={"VLM_TARGET_DEVICE": "CPU"},
+        args=(tmp_path,),
+        expected_returncode=1 if failed else 0,
+    )
+    assert "Checking for model:" in result.stderr
+    assert "Fetching get_model.sh" in result.stderr
+    if fetch_status:
+        assert "ERROR: Failed to download get_model.sh" in result.stderr
+        assert "Downloader progress" not in result.stderr
+    else:
+        assert "Downloader progress" in result.stderr
+        assert "Downloader stderr" in result.stderr
+        assert "Downloader progress" not in result.stdout
+        if download_status:
+            assert "exit code: 23" in result.stderr
+            if with_log:
+                assert "Last 30 lines from log:" in result.stderr
+                assert "Download failure details" in result.stderr
+            else:
+                assert "No model download log found in:" in result.stderr
+        else:
+            assert "Created config.json" in result.stderr
+            assert "MODEL=<test/model>\n" in result.stdout
+    if failed:
+        assert "MODEL=<" not in result.stdout
+
+
+def test_cached_model_keeps_diagnostics_out_of_model_name(tmp_path):
+    models = tmp_path / "models"
+    models.mkdir()
+    (models / "config.json").write_text(
+        json.dumps({"model_config_list": [{"config": {"name": "test/model"}}]})
+    )
+    result = run_setup(
+        'export OVMS_CONFIG_DIR="$2"; '
+        'prepare_ovms_model && printf "MODEL=<%s>\\n" "$VLM_STORAGE_MODEL_NAME"',
+        env={"VLM_TARGET_DEVICE": "CPU"},
+        args=(tmp_path,),
+    )
+    assert "Skipping export." in result.stderr
+    assert "MODEL=<test/model>\n" in result.stdout
 
 
 def git(*args):
