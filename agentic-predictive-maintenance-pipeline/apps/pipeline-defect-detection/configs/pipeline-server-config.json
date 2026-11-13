@@ -17,7 +17,7 @@
                         }
                     }
                 },
-                "pipeline": "{auto_source} name=source ! decodebin3 ! gvadetect model=/home/pipeline-server/models/pipeline-defect-detection.xml device=CPU threshold=0.4 name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
+                "pipeline": "{auto_source} name=source ! decodebin3 ! videoconvert ! video/x-raw,format=BGR ! gvadetect model=/home/pipeline-server/models/hf/86a3169310e91fcdaea0aab45f1ade616fced081/model.xml model-proc=/home/pipeline-server/models/pipeline-defect-detection.json pre-process-backend=opencv device=CPU threshold=0.25 name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -47,7 +47,7 @@
                         }
                     }
                 },
-                "pipeline": "{auto_source} name=source ! decodebin3 ! gvadetect model=/home/pipeline-server/models/pipeline-defect-detection.xml device=GPU threshold=0.4 model-instance-id=inst_gpu name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
+                "pipeline": "{auto_source} name=source ! decodebin3 ! videoconvert ! video/x-raw,format=BGR ! gvadetect model=/home/pipeline-server/models/hf/86a3169310e91fcdaea0aab45f1ade616fced081/model.xml model-proc=/home/pipeline-server/models/pipeline-defect-detection.json pre-process-backend=opencv device=GPU threshold=0.25 model-instance-id=inst_gpu name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -77,7 +77,7 @@
                         }
                     }
                 },
-                "pipeline": "{auto_source} name=source ! decodebin3 ! gvadetect model=/home/pipeline-server/models/pipeline-defect-detection.xml device=NPU threshold=0.4 model-instance-id=inst_npu name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
+                "pipeline": "{auto_source} name=source ! decodebin3 ! videoconvert ! video/x-raw,format=BGR ! gvadetect model=/home/pipeline-server/models/hf/86a3169310e91fcdaea0aab45f1ade616fced081/model.xml model-proc=/home/pipeline-server/models/pipeline-defect-detection.json pre-process-backend=opencv device=NPU threshold=0.25 model-instance-id=inst_npu name=detection ! gvametaconvert add-empty-results=true name=metaconvert ! queue ! gvafpscounter ! appsink name=destination",
                 "parameters": {
                     "type": "object",
                     "properties": {

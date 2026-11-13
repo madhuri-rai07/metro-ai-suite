@@ -1,0 +1,63 @@
+Data Attribution and Disclaimers
+
+This demonstration uses publicly available third-party datasets as illustrative sample input only. None of the datasets below is Intel operational, manufacturing or customer data. None is derived from, and none is representative of, any customer's assets, equipment, systems or performance. All outputs shown are illustrative and must not be relied on for any operational, engineering, integrity-management, safety or business decision. Each dataset is provided by its publisher "as is," without warranties of any kind, including as to accuracy, title or non-infringement. Intel makes no representation as to any dataset's provenance or the rights of its publishers and gives no warranty in respect of them. No dataset publisher endorses Intel, this demonstration, or any Intel product.
+
+1. Predictive Maintenance Oil and Gas Pipeline Data
+
+"Predictive maintenance oil and gas pipeline data" by Muhammad Waqas, published on Kaggle at kaggle.com/datasets/muhammadwaqas023/predictive-maintenance-oil-and-gas-pipeline-data (last updated 4 June 2025), made available under the MIT License. As stated by its author, this is synthetic data generated to reflect realistic conditions in oil and gas operations; it is not derived from any real pipeline or operator. Intel uses the dataset for the purposes of this demonstration only and does not otherwise modify it.
+
+MIT License notice, reproduced as required:
+
+Copyright (c) Muhammad Waqas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+2. MultimodalGasData
+
+MultimodalGasData: Multimodal Dataset for Gas Detection and Classification, by Parag Narkhede, Rahee Walambe, Pulkit Chandel, Shruti Mandaokar and Ketan Kotecha, published by Mendeley Data, Version 2, 10 June 2022, DOI: 10.17632/zkwgkjkjn9.2, available at data.mendeley.com/datasets/zkwgkjkjn9/2, contributed by Symbiosis International University / Symbiosis Institute of Technology. The publisher's record declares this dataset to be made available under the Creative Commons Attribution 4.0 International License (CC BY 4.0), the full terms of which are available at creativecommons.org/licenses/by/4.0/. The dataset comprises simultaneous measurements from seven metal oxide gas sensors (MQ2, MQ3, MQ5, MQ6, MQ7, MQ8 and MQ135) together with thermal camera imagery, labelled across four classes: No Gas, Perfume, Smoke, and a mixture of Perfume and Smoke.
+
+The license is granted on an "as is" basis and the licensor disclaims all representations and warranties concerning the material, including as to title, accuracy and non-infringement, and excludes liability to the fullest extent permitted; see sections 5 and 6 of the license at the link above.
+
+Intel does not host, distribute, modify, sublicense or validate this dataset, and has not adapted it. It is identified here solely as an example of publicly available data that may be suitable for the training procedure described in this document. You must obtain it directly from the publisher and satisfy yourself independently as to its license terms, content, provenance and fitness for your intended use. Intel makes no representation or warranty of any kind in respect of this dataset, including as to the sufficiency of the publishers' license grant.
+
+This is laboratory data collected for gas detection and classification research; it is not predictive maintenance data, is not derived from any industrial installation, and no inference as to equipment condition, failure or maintenance requirement should be drawn from it or from any model trained on it. The dataset version referenced here is Version 2, which carries its own persistent identifier; later versions may differ in content and should be assessed separately if used. You are responsible for compliance with all applicable export control, sanctions and sector-specific requirements in your use of this dataset and of any model trained on it. If you use a substantial portion of the dataset contents, note that section 4 of the license addresses sui generis database rights, which may be relevant depending on where your processing takes place.
+
+Attribution, where required in your use or in any model or documentation you derive from it: "Narkhede, P., Walambe, R., Chandel, P., Mandaokar, S. and Kotecha, K. (2022), MultimodalGasData: Multimodal Dataset for Gas Detection and Classification, Mendeley Data, V2, DOI: 10.17632/zkwgkjkjn9.2, licensed under CC BY 4.0 (creativecommons.org/licenses/by/4.0/)," with an indication of any modifications you make.
+
+3. IRRISIGHT
+
+IRRISIGHT, published by OBH30 at huggingface.co/datasets/OBH30/IRRISIGHT (Pennsylvania and Maryland) and by NibirMandal at huggingface.co/datasets/NibirMandal/IRRISIGHT (Arizona, Arkansas, Florida, Georgia, New Jersey, North Carolina, Ohio, Oregon and South Carolina). The publishers declare this dataset to be made available under the Creative Commons Attribution 4.0 International License (CC BY 4.0), the full terms of which are available at creativecommons.org/licenses/by/4.0/. The dataset comprises Sentinel-2 imagery, derived vegetation indices, land, crop, irrigation and sub-irrigation masks, and structured soil and environmental descriptions.
+
+The license is granted on an "as is" basis and the licensor disclaims all representations and warranties concerning the material, including as to title, accuracy and non-infringement, and excludes liability to the fullest extent permitted; see sections 5 and 6 of the license at the link above.
+
+Intel does not host, distribute, modify, sublicense or validate this dataset, and has not adapted it. It is identified here solely as an example of publicly available data. You must obtain it directly from the publishers and satisfy yourself independently as to its license terms, content, provenance and fitness for your intended use. Intel makes no representation or warranty of any kind in respect of this dataset, including as to the sufficiency of the publishers' license grant.
+
+Note that the dataset appears to incorporate or derive from third-party source data, including Copernicus Sentinel-2 imagery and United States federal and state agricultural and soil data, each of which may carry its own attribution or usage terms. Neither publisher identifies an institution, publication or persistent identifier. You should confirm the upstream position for yourself. If you use a substantial portion of the dataset contents, note that section 4 of the license addresses sui generis database rights, which may be relevant depending on where your processing takes place.
+
+Attribution, where required in your use or in any model or documentation you derive from it: "IRRISIGHT, by OBH30 and NibirMandal, licensed under CC BY 4.0 (creativecommons.org/licenses/by/4.0/)," with an indication of any modifications you make.
+
+4. Gas Pipeline Defect Detection
+
+"Gas pipelines" by Sardaana Eginova, published on Kaggle at kaggle.com/datasets/sardaanaeginova/gas-pipelines. The publisher declares this dataset to be made available under the MIT License. The dataset comprises photographic imagery of undamaged and damaged gas pipes located in Almaty, Kazakhstan, annotated for corrosion, deformation and coating degradation. It contains 8,448 images with annotations in COCO Segmentation format, exported via Roboflow on 12 January 2025. Images were auto-oriented and resized to 640x640; no augmentation was applied.
+
+Intel does not host, distribute, modify, sublicense or validate this dataset. It is identified here solely as an example of publicly available data that may be suitable for the training procedure described in this document. You must obtain the dataset directly from the publisher and satisfy yourself independently as to its license terms, content, provenance and fitness for your intended use. Intel makes no representation or warranty of any kind in respect of this dataset, express or implied, including as to accuracy, completeness, provenance, title, non-infringement, fitness for a particular purpose, or the sufficiency of the publisher's license grant.
+
+The dataset was exported from Roboflow, and the terms applicable to the originating Roboflow project are not stated on the Kaggle page; you should confirm the upstream license position for yourself. The dataset consists of photographs taken in a public urban environment and may contain personal data within the meaning of applicable data protection law; you are responsible for determining your lawful basis for processing and for any screening or minimization required before training. You are also responsible for compliance with all applicable export control, sanctions and sector-specific requirements in your use of this dataset and of any model trained on it.
+
+The imagery depicts third-party infrastructure. Neither Intel nor this document makes any representation, finding or assessment as to the condition, safety, integrity or maintenance of any pipeline, facility, operator or asset appearing in the dataset.
+
+The publisher's declared license terms are reproduced below. Where the license imposes attribution or notice obligations, those obligations attach to you in your use of the dataset and in any model, output or documentation you derive from it.
+
+MIT License
+
+Copyright (c) 2025 Sardaana Eginova
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

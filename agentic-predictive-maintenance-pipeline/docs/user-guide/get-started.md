@@ -10,8 +10,8 @@ Before you start, ensure the following:
 - Docker Engine version 24.0 or higher, and Docker Compose tool version 2.20 or higher.
 - Intel® processor with at least 16 GB of RAM; Intel recommends 32 GB for Large Language
   Models (LLMs).
-- Python programming language version 3.10 or later with the `venv` module: only needed to
-  prepare sample data.
+- Python programming language version 3.12 with the `venv` module: used to verify the
+  service-downloaded reference detector and prepare sample data.
 - GNU Make: used to prepare sample data and to build from source.
 - A Hugging Face account and API token if you use a gated model such as
   `microsoft/Phi-4-mini-instruct`,`Qwen/Qwen2.5-1.5B-Instruct`.
@@ -114,15 +114,45 @@ HUGGINGFACEHUB_API_TOKEN=hf_your_token_here
 > [Hugging Face model page](https://huggingface.co/microsoft/Phi-4-mini-instruct) before using
 > the gated models.
 
-## Step 3 — Prepare Sample Data
+## Step 3 — Download the Detector and Prepare Sample Data
+
+For pipeline defect detection, download the demonstration detector from the pinned
+Hugging Face revision:
+
+```bash
+./scripts/download_llm_model.sh --use-case pipeline-defect-detection --detector-only
+```
+
+This starts `apm-model-download` and uses its Hugging Face plugin to download the
+pinned revision without conversion. A local helper verifies SHA-256 checksums and installs the model card, licenses, and dataset
+attribution with the XML/BIN under `apps/pipeline-defect-detection/models/hf/`.
+No HF token or additional host Python package is required for this public download.
+`--detector-only` skips the LLM regardless of the configured reasoning mode.
+It does not replace existing legacy detector files; all device-specific pipelines
+now use the pinned download. See the [use-case README](../../apps/pipeline-defect-detection/README.md)
+for exact labels, preprocessing, revision-update instructions, and limitations.
+This detector download is not used by the gas-detection alternative.
 
 The Deep Learning Streamer (DL Streamer) pipeline needs a video file to run. Use the
-`prepare-data` target to download the Kaggle pipeline-defect dataset and build a sample video
+`prepare-data` target to download the Kaggle Gas Pipelines dataset and build a sample video
 automatically. This step requires `make` and `python3-venv` (see [Prerequisites](#prerequisites)):
 
 ```bash
 make prepare-data USE_CASE=pipeline-defect-detection \
-    DATASET_URL="https://www.kaggle.com/api/v1/datasets/download/simplexitypipeline/pipeline-defect-dataset"
+    DATASET_URL="https://www.kaggle.com/api/v1/datasets/download/sardaanaeginova/gas-pipelines"
+```
+
+The downloader uses HTTP/1.1 for compatibility with Kaggle download endpoints.
+If the download reports an HTTP error, check the dataset's availability and access
+requirements on its [Kaggle page](https://www.kaggle.com/datasets/sardaanaeginova/gas-pipelines).
+An empty response or login/error page is not a dataset ZIP. This failure is
+independent of the Hugging Face detector download. To test inference without
+downloading the dataset, place your own video at
+`apps/pipeline-defect-detection/resources/videos/datastream.mp4` and prepare it with:
+
+```bash
+.venv/bin/python scripts/download_and_prep_data.py --transcode-video \
+    apps/pipeline-defect-detection/resources/videos/datastream.mp4
 ```
 
 The target creates a local Python virtual environment in `.venv/`, installs the script
@@ -130,18 +160,18 @@ dependencies from `scripts/requirements.txt` into it, and runs
 `scripts/download_and_prep_data.py`. The system Python installation is not modified.
 
 This script:
-- Downloads and extracts the dataset, which is around 300 MB.
-- Splits it into training and validation sets.
+- Downloads and extracts the source archive.
+- Splits images locally for sample preparation; this does not reproduce the Geti evaluation split.
 - Builds `apps/pipeline-defect-detection/resources/videos/datastream.mp4` for use by DL Streamer.
 
-> **Training note**: This release does not include a production-trained defect detection model
-> because a representative, properly licensed, and sufficiently labeled dataset is not available
-> for release validation. To train a detector for your own inspection scenario, see
+> **Training note**: The Geti-trained model is demonstration-only, not validated
+> for production or safety decisions. It can miss defects, particularly coating degradation.
+> To train and validate a detector for your own inspection scenario, see
 > [Training a Defect Detection Model with Intel Geti](./training-with-geti.md).
 
 > [!NOTE]
-> Skip this step if you have your own video, or if you plan to run in
-> `LLM_MODE=fallback` where no video or DL Streamer inference is required.
+> Skip sample-data preparation if you have your own video. The detector and video
+> are required in both reasoning modes; `LLM_MODE=fallback` skips only the LLM.
 
 **Gas detection (alternative use case)**: prepare the publicly available gas-detection dataset instead.
 This also generates `frame_manifest.json`, which maps video frames to their paired sensor rows.
@@ -165,7 +195,9 @@ model configured via `LLM_MODEL_NAME`/`LLM_DEVICE`/`LLM_WEIGHT_FORMAT`:
 source ./scripts/download_llm_model.sh --use-case pipeline-defect-detection
 ```
 
-For gas detection, use `--use-case gas-detection` instead.
+For gas detection, use `--use-case gas-detection` instead. For pipeline defect
+detection, the script also verifies/reuses the detector prepared in Step 3 rather
+than downloading a generic YOLO model.
 
 This script starts `apm-model-download`, submits a download and conversion request for the Hugging Face
 model to OpenVINO model server's Intermediate Representation (IR) format, waits for the job to complete, and
@@ -174,8 +206,8 @@ writes the resulting local path back into
 as `LLM_MODEL_PATH`. `setup.sh` mounts this path read-only into the `apm-llm` container.
 
 > [!NOTE]
-> Skip this step entirely if `LLM_MODE=fallback` — the script detects this and exits
-> immediately without downloading anything.
+> Skip this step if `LLM_MODE=fallback`. When invoked in fallback mode, the script
+> skips the LLM but still prepares the detector.
 
 ## Step 5 — Launch the Application
 
@@ -265,7 +297,7 @@ Example questions:
 - `Summarize the most important maintenance findings.`
 - `Which detections need immediate attention, and why?`
 - `Compare the evidence and recommended maintenance actions.`
-- `How many Rupture detections were above 0.7 confidence?`
+- `How many corrosion detections were above 0.7 confidence?`
 
 Answers can include the structured detection query and supporting data used to ground the response.
 Treat generated prose as decision support: verify important conclusions against the displayed
@@ -296,12 +328,13 @@ source ./setup.sh --clean-data
 
 ## Configuration Reference
 
-Four files in `apps/<use-case>/` control all use-case behaviors:
+The following files in `apps/<use-case>/` configure the use case:
 
 | File | Purpose |
 |------|---------|
 | `configs/agents.yaml` | Agent pipeline settings, defect classes, and confidence thresholds |
 | `configs/pipeline-server-config.json` | DL Streamer pipeline definition and model paths |
+| `models/pipeline-defect-detection.json` | Detector preprocessing and exact output-label mapping |
 | `configs/policy_fallback.json` | Rule-based fallback thresholds and escalation actions |
 | `prompts/<use-case>.txt` | LLM prompt sections for each agent |
 
@@ -313,12 +346,17 @@ trigger alerts:
 ```yaml
 use_case_id: pipeline-defect-detection   # must match the prompt file name
 analysis:
-  min_confidence: 0.5                    # detections below this threshold are filtered
+  min_confidence: 0.25                   # detections below this threshold are filtered
 policy:
-  defect_classes: [Rupture, Deformation, Disconnect, Obstacle]
-  alert_threshold: 0.7                   # confidence threshold for policy violations
-  critical_classes: [Rupture, Disconnect]
+  defect_classes: [gas-pipelines, deformation, corrosion, coating degradation, deformations]
+  alert_threshold: 0.7                   # illustrative review threshold, not physical severity
+  critical_classes: []
 ```
+
+The fallback policy uses per-class thresholds from `policy_fallback.json`; all
+actions are `MONITOR`. The generic fallback ticket agent can assign HIGH priority
+to any threshold crossing, including pipeline context. This is a demonstration
+review flag, not an engineering risk rating. See the use-case README for details.
 
 ### Prompt File Sections
 
@@ -347,8 +385,9 @@ To adapt the blueprint to a different inspection scenario, for example, Weld Def
 # Copy the existing use-case directory
 cp -r apps/pipeline-defect-detection apps/weld-defect-detection
 
-# Edit the four configuration files
+# Edit the configuration files and supply a matching custom model and model-proc
 vi apps/weld-defect-detection/configs/agents.yaml       # update use_case_id and defect classes
+vi apps/weld-defect-detection/configs/pipeline-server-config.json
 vi apps/weld-defect-detection/configs/policy_fallback.json
 vi apps/weld-defect-detection/prompts/weld-defect-detection.txt
 
@@ -357,7 +396,8 @@ source ./setup.sh --use-case weld-defect-detection
 ```
 
 The blueprint needs no code changes; it reads all behaviors from the configuration
-files at startup.
+files at startup. Replace the copied HF downloader rather than reusing the
+pipeline detector for a different use case.
 
 <!--hide_directive
 :::{toctree}

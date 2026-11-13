@@ -82,7 +82,15 @@ $(foreach component,$(COMPONENTS),$(eval $(call BUILD_COMPONENT,$(component))))
 # ==============================================================================
 
 .PHONY: test
-test: $(addprefix test-, $(TEST_COMPONENTS))  ## Run all unit tests
+test: test-use-cases test-data-prep $(addprefix test-, $(TEST_COMPONENTS))  ## Run all unit tests
+
+.PHONY: test-use-cases
+test-use-cases:  ## Test the pipeline detector's checksum-verified download
+	python$(PYTHON_VERSION) -m unittest discover -s apps/pipeline-defect-detection/tests -v
+
+.PHONY: test-data-prep
+test-data-prep:  ## Test dataset download and preparation helpers
+	python$(PYTHON_VERSION) -m unittest discover -s scripts/tests -v
 
 define TEST_COMPONENT
 .PHONY: test-$(1)

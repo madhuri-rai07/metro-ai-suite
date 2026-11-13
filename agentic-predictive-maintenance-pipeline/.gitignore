@@ -8,6 +8,8 @@ services/agent_service/
 services/ui_service/
 
 apps/pipeline-defect-detection/models/*
+!apps/pipeline-defect-detection/models/pipeline-defect-detection.json
+!apps/pipeline-defect-detection/models/pipeline-defect-detection.json.license
 apps/gas-detection-multimodal/models/*
 
 # Large sample media (downloaded/generated locally, not committed)
@@ -21,3 +23,6 @@ apm/
 apps/*/models/llm_model*/
 
 .venv/
+
+# Checksum-verified Hugging Face detector artifacts and notices
+apps/pipeline-defect-detection/models/hf/

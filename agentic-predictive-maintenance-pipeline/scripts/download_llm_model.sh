@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Copyright (C) 2026 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 #
-# Downloads the YOLO model and converts the LLM configured for a use case (LLM_MODEL_NAME in
+# Downloads the detector and converts the LLM configured for a use case (LLM_MODEL_NAME in
 # apps/<dir>/.env_<use-case>) to OpenVINO Model Server (OVMS) format using
 # the model-download microservice (https://github.com/open-edge-platform/edge-ai-libraries/
 # tree/main/microservices/model-download), then writes the resulting local path
@@ -18,7 +18,6 @@ set -Eeuo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
 NC='\033[0m'
 
 log()  { echo -e "${GREEN}[INFO ] $*${NC}"; }
@@ -32,26 +31,29 @@ cd "${ROOT_DIR}"
 usage() {
     cat <<EOF
 Usage:
-  $(basename "$0") --use-case <use-case-name>
+  $(basename "$0") --use-case <use-case-name> [--detector-only]
 
 Downloads and converts the LLM configured for <use-case> (via LLM_MODEL_NAME,
 LLM_DEVICE, LLM_WEIGHT_FORMAT in apps/<dir>/.env_<use-case>) to OVMS
 format using the model-download microservice, then writes LLM_MODEL_PATH back
-into that env file. The YOLO11 model named by YOLO_MODEL_NAME (default:
-yolo11n; precision via YOLO_PRECISION, default FP32) is always downloaded too,
-and YOLO_MODEL_PATH is written.
+into that env file. Pipeline defect detection uses its pinned Hugging Face
+detector without conversion; other use cases retain the YOLO11 download
+configured by YOLO_MODEL_NAME and YOLO_PRECISION.
 
 Options:
   --use-case <name>   Use case name, i.e. the <name> in apps/<dir>/.env_<name> (required)
+  --detector-only     Prepare only the HF pipeline detector, without downloading an LLM
   -h, --help          Show this help message
 EOF
 }
 
 USE_CASE=""
+DETECTOR_ONLY=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --use-case) USE_CASE="$2"; shift 2 ;;
         --use-case=*) USE_CASE="${1#*=}"; shift ;;
+        --detector-only) DETECTOR_ONLY=true; shift ;;
         -h|--help) usage; exit 0 ;;
         *) err "Unknown argument: $1"; usage; exit 1 ;;
     esac
@@ -60,6 +62,10 @@ done
 if [[ -z "${USE_CASE}" ]]; then
     err "--use-case is required."
     usage
+    exit 1
+fi
+if [[ "${DETECTOR_ONLY}" == "true" && "${USE_CASE}" != "pipeline-defect-detection" ]]; then
+    err "--detector-only is supported for pipeline-defect-detection."
     exit 1
 fi
 
@@ -83,16 +89,21 @@ if [[ -z "${ENV_FILE}" ]]; then
 fi
 USE_CASE_DIR="$(dirname "${ENV_FILE}")"
 
-# shellcheck disable=SC1090
 set -a
+# shellcheck disable=SC1090
 source "${ENV_FILE}"
 set +a
 
 DOWNLOAD_LLM=true
 DOWNLOAD_YOLO=true
+DOWNLOAD_DETECTOR=false
+if [[ "${USE_CASE}" == "pipeline-defect-detection" ]]; then
+    DOWNLOAD_YOLO=false
+    DOWNLOAD_DETECTOR=true
+fi
 
-if [[ "${LLM_MODE:-llm}" == "fallback" ]]; then
-    warn "LLM_MODE=fallback in ${ENV_FILE} — no LLM model download needed."
+if [[ "${DETECTOR_ONLY}" == "true" || "${LLM_MODE:-llm}" == "fallback" ]]; then
+    log "Skipping LLM download; preparing the detector only."
     DOWNLOAD_LLM=false
 fi
 
@@ -120,12 +131,11 @@ fi
 
 mkdir -p "${USE_CASE_MODELS_DIR}"
 # apm-model-download runs as a non-root container user (appuser); make sure it
-# can write new model subdirectories into the host-mounted models directory
-# regardless of the host UID that owns it.
-chmod -R a+rwX "${USE_CASE_MODELS_DIR}" 2>/dev/null || true
+# can create subdirectories without changing permissions on installed model files.
+chmod a+rwX "${USE_CASE_MODELS_DIR}"
 
 log "Starting model-download service (apm-model-download)..."
-export USE_CASE_DIR USE_CASE_MODELS_DIR
+export USE_CASE USE_CASE_DIR USE_CASE_MODELS_DIR
 export USE_CASE_CONFIGS_DIR="${USE_CASE_DIR}/configs"
 export USE_CASE_PROMPTS_DIR="${USE_CASE_DIR}/prompts"
 export USE_CASE_RESOURCES_DIR="${USE_CASE_DIR}/resources"
@@ -281,6 +291,10 @@ JSON
     log "YOLO_MODEL_PATH set to '${model_dir}' in ${ENV_FILE}"
 }
 
+if [[ "${DOWNLOAD_DETECTOR}" == "true" ]]; then
+    log "Preparing the pinned HF detector through model-download (no conversion)..."
+    python3.12 "${USE_CASE_DIR}/download_model.py" --port "${MODEL_DOWNLOAD_PORT}"
+fi
 [[ "${DOWNLOAD_LLM}" == "true" ]] && download_llm
 [[ "${DOWNLOAD_YOLO}" == "true" ]] && download_yolo
 
