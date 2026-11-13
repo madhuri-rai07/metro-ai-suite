@@ -38,6 +38,13 @@ than silently deploying another model. The downloaded model card, Apache-2.0
 license, and dataset attribution remain beside the model. The weights and dataset
 are not added to this source repository.
 
+## Dataset Attribution
+
+Read [Data Attribution and Disclaimers](./DATASET_ATTRIBUTION.txt) before obtaining
+or using the sample dataset. This source copy preserves the approved attribution,
+disclaimers, and publisher's MIT license notice unchanged from the pinned HF model.
+The downloader also retains the notice alongside the downloaded model artifacts.
+
 ## Directory Structure
 
 ```

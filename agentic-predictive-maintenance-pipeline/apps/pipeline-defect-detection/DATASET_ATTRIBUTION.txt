@@ -1,0 +1,25 @@
+Data Attribution and Disclaimers
+
+This demonstration uses publicly available third-party datasets as illustrative sample input only. None of the datasets below is Intel operational, manufacturing or customer data. None is derived from, and none is representative of, any customer's assets, equipment, systems or performance. All outputs shown are illustrative and must not be relied on for any operational, engineering, integrity-management, safety or business decision. Each dataset is provided by its publisher "as is," without warranties of any kind, including as to accuracy, title or non-infringement. Intel makes no representation as to any dataset's provenance or the rights of its publishers and gives no warranty in respect of them. No dataset publisher endorses Intel, this demonstration, or any Intel product.
+
+4. Gas Pipeline Defect Detection
+
+"Gas pipelines" by Sardaana Eginova, published on Kaggle at kaggle.com/datasets/sardaanaeginova/gas-pipelines. The publisher declares this dataset to be made available under the MIT License. The dataset comprises photographic imagery of undamaged and damaged gas pipes located in Almaty, Kazakhstan, annotated for corrosion, deformation and coating degradation. It contains 8,448 images with annotations in COCO Segmentation format, exported via Roboflow on 12 January 2025. Images were auto-oriented and resized to 640x640; no augmentation was applied.
+
+Intel does not host, distribute, modify, sublicense or validate this dataset. It is identified here solely as an example of publicly available data that may be suitable for the training procedure described in this document. You must obtain the dataset directly from the publisher and satisfy yourself independently as to its license terms, content, provenance and fitness for your intended use. Intel makes no representation or warranty of any kind in respect of this dataset, express or implied, including as to accuracy, completeness, provenance, title, non-infringement, fitness for a particular purpose, or the sufficiency of the publisher's license grant.
+
+The dataset was exported from Roboflow, and the terms applicable to the originating Roboflow project are not stated on the Kaggle page; you should confirm the upstream license position for yourself. The dataset consists of photographs taken in a public urban environment and may contain personal data within the meaning of applicable data protection law; you are responsible for determining your lawful basis for processing and for any screening or minimization required before training. You are also responsible for compliance with all applicable export control, sanctions and sector-specific requirements in your use of this dataset and of any model trained on it.
+
+The imagery depicts third-party infrastructure. Neither Intel nor this document makes any representation, finding or assessment as to the condition, safety, integrity or maintenance of any pipeline, facility, operator or asset appearing in the dataset.
+
+The publisher's declared license terms are reproduced below. Where the license imposes attribution or notice obligations, those obligations attach to you in your use of the dataset and in any model, output or documentation you derive from it.
+
+MIT License
+
+Copyright (c) 2025 Sardaana Eginova
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
