@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 """
 Download a dataset and prepare train/val splits for the Agentic Predictive
@@ -114,13 +114,17 @@ def download_dataset(dataset_url: str, download_dir: Path,
     zip_path = download_dir / zip_name
 
     try:
-        subprocess.run(["curl", "-L", "-o", str(zip_path), dataset_url], check=True)
-        print("✅ Download complete\n")
-
-        print("📦 Extracting dataset...")
+        # Kaggle's download endpoint can return an empty 404 over HTTP/2.
+        subprocess.run(
+            ["curl", "--http1.1", "--fail", "--location", "--silent", "--show-error",
+             "--output", str(zip_path), "--write-out", "%{http_code}",
+             "--url", dataset_url],
+            stdout=subprocess.PIPE, text=True, check=True, shell=False,
+        )
         with zipfile.ZipFile(zip_path, "r") as zf:
+            print("✅ Download complete\n")
+            print("📦 Extracting dataset...")
             zf.extractall(download_dir)
-        zip_path.unlink()
         print("✅ Extraction complete\n")
 
         return download_dir
@@ -129,11 +133,17 @@ def download_dataset(dataset_url: str, download_dir: Path,
         print("❌ Error: 'curl' not found. Please install curl.")
         sys.exit(1)
     except subprocess.CalledProcessError as e:
-        print(f"❌ Download failed (exit code {e.returncode})")
+        status = (e.stdout or "").strip()
+        http_status = f"HTTP {status}, " if status.isdigit() and status != "000" else ""
+        print(f"❌ Download failed ({http_status}curl exit code {e.returncode}).")
+        print("   Check the dataset URL, access permissions, and network connection.")
         sys.exit(1)
     except zipfile.BadZipFile:
         print("❌ Downloaded file is not a valid zip archive.")
+        print("   The server may have returned an empty response or a login/error page.")
         sys.exit(1)
+    finally:
+        zip_path.unlink(missing_ok=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

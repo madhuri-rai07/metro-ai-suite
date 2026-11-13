@@ -139,6 +139,19 @@ make prepare-data USE_CASE=pipeline-defect-detection \
     DATASET_URL="https://www.kaggle.com/api/v1/datasets/download/sardaanaeginova/gas-pipelines"
 ```
 
+The downloader uses HTTP/1.1 for compatibility with Kaggle download endpoints.
+If the download reports an HTTP error, check the dataset's availability and access
+requirements on its [Kaggle page](https://www.kaggle.com/datasets/sardaanaeginova/gas-pipelines).
+An empty response or login/error page is not a dataset ZIP. This failure is
+independent of the Hugging Face detector download. To test inference without
+downloading the dataset, place your own video at
+`apps/pipeline-defect-detection/resources/videos/datastream.mp4` and prepare it with:
+
+```bash
+.venv/bin/python scripts/download_and_prep_data.py --transcode-video \
+    apps/pipeline-defect-detection/resources/videos/datastream.mp4
+```
+
 The target creates a local Python virtual environment in `.venv/`, installs the script
 dependencies from `scripts/requirements.txt` into it, and runs
 `scripts/download_and_prep_data.py`. The system Python installation is not modified.
