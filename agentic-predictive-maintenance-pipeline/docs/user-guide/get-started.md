@@ -10,8 +10,8 @@ Before you start, ensure the following:
 - Docker Engine version 24.0 or higher, and Docker Compose tool version 2.20 or higher.
 - Intel® processor with at least 16 GB of RAM; Intel recommends 32 GB for Large Language
   Models (LLMs).
-- Python programming language version 3.12 with the `venv` module: used to download the
-  reference detector and prepare sample data.
+- Python programming language version 3.12 with the `venv` module: used to verify the
+  service-downloaded reference detector and prepare sample data.
 - GNU Make: used to prepare sample data and to build from source.
 - A Hugging Face account and API token if you use a gated model such as
   `microsoft/Phi-4-mini-instruct`,`Qwen/Qwen2.5-1.5B-Instruct`.
@@ -114,17 +114,18 @@ HUGGINGFACEHUB_API_TOKEN=hf_your_token_here
 
 ## Step 3 — Download the Detector and Prepare Sample Data
 
-For pipeline defect detection, after the
-[HF model PR](https://huggingface.co/open-edge-platform/apm-pipeline-defect-detection/discussions/1)
-is merged, download the demonstration detector from the pinned Hugging Face revision:
+For pipeline defect detection, download the demonstration detector from the pinned
+Hugging Face revision:
 
 ```bash
-python3.12 apps/pipeline-defect-detection/download_model.py
+./scripts/download_llm_model.sh --use-case pipeline-defect-detection --detector-only
 ```
 
-This verifies SHA-256 checksums and installs the model card, licenses, and dataset
+This starts `apm-model-download` and uses its Hugging Face plugin to download the
+pinned revision without conversion. A local helper verifies SHA-256 checksums and installs the model card, licenses, and dataset
 attribution with the XML/BIN under `apps/pipeline-defect-detection/models/hf/`.
-No HF token or additional Python package is required for this public download.
+No HF token or additional host Python package is required for this public download.
+`--detector-only` skips the LLM regardless of the configured reasoning mode.
 It does not replace existing legacy detector files; all device-specific pipelines
 now use the pinned download. See the [use-case README](../../apps/pipeline-defect-detection/README.md)
 for exact labels, preprocessing, revision-update instructions, and limitations.
@@ -192,7 +193,9 @@ model configured via `LLM_MODEL_NAME`/`LLM_DEVICE`/`LLM_WEIGHT_FORMAT`:
 source ./scripts/download_llm_model.sh --use-case pipeline-defect-detection
 ```
 
-For gas detection, use `--use-case gas-detection` instead.
+For gas detection, use `--use-case gas-detection` instead. For pipeline defect
+detection, the script also verifies/reuses the detector prepared in Step 3 rather
+than downloading a generic YOLO model.
 
 This script starts `apm-model-download`, submits a download and conversion request for the Hugging Face
 model to OpenVINO model server's Intermediate Representation (IR) format, waits for the job to complete, and
@@ -201,8 +204,8 @@ writes the resulting local path back into
 as `LLM_MODEL_PATH`. `setup.sh` mounts this path read-only into the `apm-llm` container.
 
 > [!NOTE]
-> Skip this step entirely if `LLM_MODE=fallback` — the script detects this and exits
-> immediately without downloading anything.
+> Skip this step if `LLM_MODE=fallback`. When invoked in fallback mode, the script
+> skips the LLM but still prepares the detector.
 
 ## Step 5 — Launch the Application
 

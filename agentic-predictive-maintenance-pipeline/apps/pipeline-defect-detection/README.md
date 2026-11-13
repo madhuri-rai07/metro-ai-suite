@@ -10,12 +10,11 @@ Agentic Predictive Maintenance Blueprint from `metro-ai-suite`.
 
 ## Quick Start
 
-After the [HF model PR](https://huggingface.co/open-edge-platform/apm-pipeline-defect-detection/discussions/1)
-is merged, download the reviewed model and notices before launching APM:
+Download the model and notices before launching APM:
 
 ```bash
 cd <metro-ai-suite>/agentic-predictive-maintenance-pipeline
-python3.12 apps/pipeline-defect-detection/download_model.py
+./scripts/download_llm_model.sh --use-case pipeline-defect-detection --detector-only
 # Prepare resources/videos/datastream.mp4 as described in the getting-started guide.
 LLM_MODE=fallback source ./setup.sh --use-case pipeline-defect-detection
 ```
@@ -24,26 +23,36 @@ For LLM reasoning, prepare the LLM separately following the
 [getting-started guide](../../docs/user-guide/get-started.md), then start without
 the fallback override. Fallback mode skips the LLM, not video inference.
 
-The standard-library downloader fetches seven files from
+The command starts the existing `apm-model-download` microservice and requests
 [`open-edge-platform/apm-pipeline-defect-detection`](https://huggingface.co/open-edge-platform/apm-pipeline-defect-detection)
-at immutable revision `86a3169310e91fcdaea0aab45f1ade616fced081`. This pins the reviewed
+at immutable revision `86a3169310e91fcdaea0aab45f1ade616fced081`, using its
+Hugging Face plugin with conversion disabled. The model is already OpenVINO IR.
+The local Python helper calls only the service's loopback API; it does not
+download artifacts directly from Hugging Face. This pins the reviewed
 artifact commit, not a moving `main` or PR ref. If review changes the artifacts,
 update the revision and checksums in `download_model.py` and all pipeline paths
 together before merging this integration.
 
-Downloads are size- and SHA-256-checked and installed atomically under
+The service retains its snapshot under `models/hf-downloads/<revision>/`.
+The helper size- and SHA-256-checks all seven required files and installs them atomically under
 `models/hf/<revision>/`. Existing legacy XML/BIN files are not used or overwritten.
 A valid cache is reused offline; an incomplete or modified cache fails rather
 than silently deploying another model. The downloaded model card, Apache-2.0
 license, and dataset attribution remain beside the model. The weights and dataset
-are not added to this source repository.
+are not added to this source repository. `--detector-only` skips LLM preparation
+even when the environment file sets `LLM_MODE=llm`. Without this flag, the script
+prepares both the detector and LLM (unless fallback mode is configured), not a
+generic Ultralytics YOLO model. `MODEL_DOWNLOAD_PORT` selects the local service
+port, and its `/opt/models` mount must point to this use case's `models/` directory.
 
 ## Dataset Attribution
 
-Read [Data Attribution and Disclaimers](./DATASET_ATTRIBUTION.txt) before obtaining
-or using the sample dataset. This source copy preserves the approved attribution,
-disclaimers, and publisher's MIT license notice unchanged from the pinned HF model.
-The downloader also retains the notice alongside the downloaded model artifacts.
+Read the shared [Data Attribution and Disclaimers](../../DATASET_ATTRIBUTION.txt)
+before obtaining or using the sample dataset. It preserves the approved notices
+for four reference datasets; section 4 covers this use case. Listing a dataset
+does not imply it is configured in this use case.
+The downloader still retains the pipeline-specific notice from the pinned HF
+model alongside the downloaded model artifacts.
 
 ## Directory Structure
 
@@ -56,7 +65,7 @@ apps/pipeline-defect-detection/
 ├── models/
 │   ├── pipeline-defect-detection.json # DL Streamer preprocessing and class mapping
 │   └── hf/<revision>/                # Downloaded model and notices (gitignored)
-├── download_model.py                 # Pinned, checksum-verified download
+├── download_model.py                 # Service client and verified installation
 ├── prompts/
 │   └── pipeline-defect-detection.txt  # LLM prompts (section-based)
 └── .env_pipeline-defect-detection     # Environment variable overrides

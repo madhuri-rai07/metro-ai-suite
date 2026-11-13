@@ -52,7 +52,7 @@ restarted application does not show detections without corresponding run IDs.
 Run the setup script with a use case:
 
 ```bash
-python3.12 apps/pipeline-defect-detection/download_model.py
+./scripts/download_llm_model.sh --use-case pipeline-defect-detection --detector-only
 source setup.sh --use-case pipeline-defect-detection
 ```
 
@@ -65,7 +65,7 @@ Services started:
 | Container | Role |
 |-----------|------|
 | `apm-mqtt-broker` | Mosquitto MQTT broker |
-| `apm-model-download` | Downloads/converts the LLM when requested; the detector uses the pinned use-case download script |
+| `apm-model-download` | Downloads the pinned HF detector without conversion and downloads/converts the LLM when requested |
 | `apm-dlstreamer` | Video inference (DL Streamer Pipeline Server) |
 | `apm-storage` | REST API + SQLite storage for detections |
 | `apm-detection` | Owns DL Streamer control, raw-detection ingestion, and the batch-complete event |

@@ -2,18 +2,25 @@
 # SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-"""Download the reviewed detector and notices without overwriting local models."""
+"""Install the pinned detector through the model-download microservice."""
 
+import argparse
 import hashlib
+import http.client
+import json
 import os
 from pathlib import Path
+import re
+import shutil
 import tempfile
-from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, build_opener
+import time
 
 
 REPOSITORY = "open-edge-platform/apm-pipeline-defect-detection"
 REVISION = "86a3169310e91fcdaea0aab45f1ade616fced081"
+SERVICE_DOWNLOAD_PATH = f"hf-downloads/{REVISION}"
+DOWNLOAD_TIMEOUT = 1800
+POLL_INTERVAL = 2
 # Pin sizes as well as hashes to reject truncated or unexpectedly large responses.
 ARTIFACTS = {
     "model.xml": (748634, "e98d650e30ee5a388ba313b109fe84f685c5eb12d5d661f2e219b0ad6dc2fdc4"),
@@ -28,16 +35,68 @@ ARTIFACTS = {
 }
 
 
-class HTTPSRedirectHandler(HTTPRedirectHandler):
-    """Allow HF's CDN redirects without downgrading transport security."""
+def service_request(port, path, body=None):
+    """Call only the local service, without proxies or HTTP redirects."""
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+    try:
+        connection.request(
+            "GET" if body is None else "POST",
+            f"/api/v1/{path}",
+            body=None if body is None else json.dumps(body),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        if response.status != 200:
+            raise RuntimeError(f"model-download returned HTTP {response.status}")
+        payload = response.read(1024 * 1024 + 1)
+        if len(payload) > 1024 * 1024:
+            raise ValueError("model-download response exceeds the size limit")
+        result = json.loads(payload)
+        if not isinstance(result, dict):
+            raise ValueError("Invalid model-download response")
+        return result
+    finally:
+        connection.close()
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if urlsplit(newurl).scheme != "https":
-            raise ValueError("Model downloads require HTTPS redirects")
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+def download_snapshot(port):
+    """Ask the service for the exact HF revision, without OpenVINO conversion."""
+    response = service_request(port, f"models/download?download_path={SERVICE_DOWNLOAD_PATH}", {
+        "models": [{
+            "name": REPOSITORY, "hub": "huggingface", "revision": REVISION,
+            "is_ovms": False,
+        }],
+        "parallel_downloads": False,
+    })
+    jobs = response.get("job_ids")
+    if (not isinstance(jobs, list) or len(jobs) != 1
+            or not isinstance(jobs[0], str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", jobs[0])):
+        raise ValueError("Expected one model-download job ID")
+    job_id = jobs[0]
+    print(f"model-download job: {job_id}", flush=True)
+    deadline = time.monotonic() + DOWNLOAD_TIMEOUT
+    while time.monotonic() < deadline:
+        job = service_request(port, f"jobs/{job_id}")
+        if job.get("model_name") != REPOSITORY or job.get("hub") != "huggingface":
+            raise ValueError("model-download returned an unexpected model job")
+        status = job.get("status")
+        if status == "completed":
+            return
+        if status in {"failed", "canceled"}:
+            raise RuntimeError(f"model-download job {job_id} {status}; check the service logs")
+        if status not in {"queued", "downloading", "processing"}:
+            raise ValueError("Unexpected model-download job status")
+        time.sleep(POLL_INTERVAL)
+    raise TimeoutError(
+        f"model-download job {job_id} timed out; check the service before retrying"
+    )
 
 
-OPENER = build_opener(HTTPSRedirectHandler())
+def reject_symlinks(path):
+    """Reject redirected model directories, including intermediate parents."""
+    if any(parent.is_symlink() for parent in (path, *path.parents)):
+        raise ValueError("Model directories must not contain symlinks")
 
 
 def verify_artifact(path, expected_size, expected_hash):
@@ -50,33 +109,18 @@ def verify_artifact(path, expected_size, expected_hash):
         raise ValueError(f"SHA-256 mismatch: {path.name}")
 
 
-def download_model(models_dir):
-    """Install a complete, verified revision atomically; reuse only a valid cache."""
-    cache = Path(models_dir) / "hf"
-    if cache.is_symlink():
-        raise ValueError("The model cache must not be a symlink")
-    cache.mkdir(parents=True, exist_ok=True)
-    destination = cache / REVISION
-    if destination.is_symlink():
-        raise ValueError("The model revision directory must not be a symlink")
-    if destination.exists():
-        for name, (size, checksum) in ARTIFACTS.items():
-            verify_artifact(destination / name, size, checksum)
-        return destination
-
-    with tempfile.TemporaryDirectory(prefix=".download-", dir=cache) as temporary:
+def install_snapshot(source, destination):
+    """Publish only verified files, leaving the service's download cache intact."""
+    reject_symlinks(source)
+    reject_symlinks(destination)
+    for name, (size, checksum) in ARTIFACTS.items():
+        verify_artifact(source / name, size, checksum)
+    with tempfile.TemporaryDirectory(prefix=".install-", dir=destination.parent) as temporary:
         staged = Path(temporary) / REVISION
         staged.mkdir(mode=0o755)
         for name, (size, checksum) in ARTIFACTS.items():
-            url = f"https://huggingface.co/{REPOSITORY}/resolve/{REVISION}/{name}"
             path = staged / name
-            with OPENER.open(url, timeout=60) as response, path.open("xb") as output:
-                total = 0
-                while chunk := response.read(1024 * 1024):
-                    total += len(chunk)
-                    if total > size:
-                        raise ValueError(f"Response exceeds expected size: {name}")
-                    output.write(chunk)
+            shutil.copyfile(source / name, path)
             verify_artifact(path, size, checksum)
             path.chmod(0o644)
         staged.chmod(0o755)
@@ -84,9 +128,35 @@ def download_model(models_dir):
     return destination
 
 
+def download_model(models_dir, port=8200):
+    """Reuse a valid installation or install a verified service-downloaded snapshot."""
+    if not 1 <= port <= 65535:
+        raise ValueError("model-download port must be between 1 and 65535")
+    models_dir = Path(models_dir)
+    destination = models_dir / "hf" / REVISION
+    reject_symlinks(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        for name, (size, checksum) in ARTIFACTS.items():
+            verify_artifact(destination / name, size, checksum)
+        return destination
+
+    source = models_dir / SERVICE_DOWNLOAD_PATH / "huggingface" / REPOSITORY.replace("/", "_")
+    reject_symlinks(source)
+    download_snapshot(port)
+    return install_snapshot(source, destination)
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", type=int, default=8200, help="Local model-download service port")
+    args = parser.parse_args()
     try:
-        installed = download_model(Path(__file__).resolve().parent / "models")
-    except (OSError, ValueError) as error:
-        raise SystemExit(f"Detector download failed: {error}") from error
+        installed = download_model(Path(__file__).resolve().parent / "models", args.port)
+    except (OSError, ValueError, RuntimeError, http.client.HTTPException) as error:
+        raise SystemExit(
+            f"Detector preparation failed: {error}\n"
+            "Use scripts/download_llm_model.sh --use-case pipeline-defect-detection "
+            "--detector-only to start the model-download service."
+        ) from error
     print(f"Verified detector and notices: {installed}")

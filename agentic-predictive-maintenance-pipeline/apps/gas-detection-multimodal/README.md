@@ -93,6 +93,13 @@ docker compose -f docker/compose.base.yaml -f docker/compose.telemetry.yaml \
 `USE_CASE_MODELS_DIR`/`USE_CASE_CONFIGS_DIR`/`REGISTRY` env vars it exports do
 not persist across separate shells/processes.)
 
+## Dataset Attribution
+
+Read the shared [Data Attribution and Disclaimers](../../DATASET_ATTRIBUTION.txt)
+before obtaining or using the dataset. Section 2, **MultimodalGasData**, contains
+the approved attribution, publisher-declared CC BY 4.0 license information, and
+limitations for the Mendeley Version 2 dataset used by this use case.
+
 ## Regenerating the dataset
 
 ```bash
