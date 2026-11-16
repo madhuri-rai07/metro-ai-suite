@@ -14,6 +14,114 @@
     <div v-else class="assistant-response-block">
       <div
         v-if="
+          !(
+            message.messageKind === 'assistant-agent-run' &&
+            displayAgents.length
+          )
+        "
+        class="answer-container"
+        :class="containerClassName"
+      >
+        <span class="answer-badge" :class="{ tool: isOuterToolBadge }">
+          <ToolOutlined v-if="isOuterToolBadge" />
+          <span v-else>
+            <SvgIcon
+              name="icon-chatbot1"
+              :size="16"
+              :style="{ color: 'var(--color-white)' }"
+          /></span>
+        </span>
+
+        <div class="mixed-content-list">
+          <template v-for="block in displayBlocks" :key="block.id">
+            <div
+              v-if="block.kind === 'text'"
+              class="answer-content mixed-text-block"
+              v-html="renderMarked(block.content)"
+              @click="handleContentClick"
+            ></div>
+
+            <div
+              v-else-if="block.kind === 'thinking'"
+              class="thinking-output-card inline-thinking-block"
+            >
+              <div class="thinking-output-header">
+                <div class="thinking-output-copy">
+                  <div class="thinking-output-title-row">
+                    <span class="thinking-inline-icon">
+                      <BulbOutlined />
+                    </span>
+                    <span class="thinking-output-title">
+                      {{ block.title || "Thinking" }}
+                    </span>
+                    <span
+                      v-if="block.subtitle"
+                      class="thinking-output-subtitle"
+                    >
+                      {{ block.subtitle }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="tool-toggle-btn thinking-toggle-btn"
+                  @click="toggleBlockCollapse(block.id)"
+                >
+                  <CaretDownOutlined
+                    :class="{ collapsed: isBlockCollapsed(block.id) }"
+                  />
+                </button>
+              </div>
+              <div
+                v-show="!isBlockCollapsed(block.id)"
+                class="thinking-output-body answer-content"
+                v-html="renderMarked(block.content)"
+                @click="handleContentClick"
+              ></div>
+            </div>
+
+            <div v-else class="tool-output-card inline-tool-block">
+              <div class="tool-output-header">
+                <div class="tool-output-copy">
+                  <div class="tool-output-title-row">
+                    <span class="tool-inline-icon">
+                      <ToolOutlined />
+                    </span>
+                    <span class="tool-output-title">
+                      {{ block.title || $t("chat.toolTitle") }}
+                    </span>
+                    <span v-if="block.subtitle" class="tool-output-subtitle">
+                      {{ block.subtitle }}
+                    </span>
+                    <span v-if="block.tag" class="tool-output-tag">
+                      {{ block.tag }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  v-if="block.collapsible"
+                  type="button"
+                  class="tool-toggle-btn"
+                  @click="toggleBlockCollapse(block.id)"
+                >
+                  <CaretDownOutlined
+                    :class="{ collapsed: isBlockCollapsed(block.id) }"
+                  />
+                </button>
+              </div>
+              <div
+                v-show="!isBlockCollapsed(block.id)"
+                class="tool-output-body answer-content"
+                v-html="renderToolContent(block.content)"
+                @click="handleContentClick"
+              ></div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div
+        v-if="
           message.messageKind === 'assistant-agent-run' && displayAgents.length
         "
         class="answer-container agent-answer-container"
@@ -46,6 +154,9 @@
                 </span>
                 <span>{{ getAgentLabel(agent) }}</span>
               </div>
+              <span v-if="getAgentDisplayTitle(agent)" class="agent-card-name">
+                {{ getAgentDisplayTitle(agent) }}
+              </span>
             </div>
             <div
               v-for="segment in agent.segments"
@@ -65,7 +176,7 @@
                           <ToolOutlined />
                         </span>
                         <span class="tool-output-title">
-                          {{ getToolSegmentTitle(segment.title) }}:
+                          {{ segment.title || $t("chat.toolTitle") }}:
                         </span>
                         <span
                           v-if="segment.subtitle"
@@ -115,160 +226,6 @@
             </div>
           </div>
         </div>
-        <div
-          v-if="displayErrorBlocks.length"
-          class="mixed-content-list agent-error-list"
-        >
-          <template v-for="block in displayErrorBlocks" :key="block.id">
-            <div class="error-output-card inline-error-block">
-              <div class="error-output-header">
-                <div class="error-output-copy">
-                  <div class="error-output-title-row">
-                    <span class="error-inline-icon">
-                      <CloseCircleOutlined />
-                    </span>
-                    <span class="error-output-title">
-                      {{ getErrorBlockTitle(block) }}
-                    </span>
-                    <span v-if="block.subtitle" class="error-output-subtitle">
-                      {{ block.subtitle }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="error-output-body answer-content"
-                v-html="renderMarked(block.content)"
-                @click="handleContentClick"
-              ></div>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <div v-else class="answer-container" :class="containerClassName">
-        <span class="answer-badge" :class="{ tool: isOuterToolBadge }">
-          <ToolOutlined v-if="isOuterToolBadge" />
-          <span v-else>
-            <SvgIcon
-              name="icon-chatbot1"
-              :size="16"
-              :style="{ color: 'var(--color-white)' }"
-          /></span>
-        </span>
-
-        <div class="mixed-content-list">
-          <template v-for="block in displayBlocks" :key="block.id">
-            <div
-              v-if="block.kind === 'text'"
-              class="answer-content mixed-text-block"
-              v-html="renderMarked(block.content)"
-              @click="handleContentClick"
-            ></div>
-
-            <div
-              v-else-if="block.kind === 'thinking'"
-              class="thinking-output-card inline-thinking-block"
-            >
-              <div class="thinking-output-header">
-                <div class="thinking-output-copy">
-                  <div class="thinking-output-title-row">
-                    <span class="thinking-inline-icon">
-                      <BulbOutlined />
-                    </span>
-                    <span class="thinking-output-title">
-                      {{ getThinkingBlockTitle(block) }}
-                    </span>
-                    <span
-                      v-if="block.subtitle"
-                      class="thinking-output-subtitle"
-                    >
-                      {{ block.subtitle }}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="tool-toggle-btn thinking-toggle-btn"
-                  @click="toggleBlockCollapse(block.id)"
-                >
-                  <CaretDownOutlined
-                    :class="{ collapsed: isBlockCollapsed(block.id) }"
-                  />
-                </button>
-              </div>
-              <div
-                v-show="!isBlockCollapsed(block.id)"
-                class="thinking-output-body answer-content"
-                v-html="renderMarked(block.content)"
-                @click="handleContentClick"
-              ></div>
-            </div>
-
-            <div
-              v-else-if="block.kind === 'error'"
-              class="error-output-card inline-error-block"
-            >
-              <div class="error-output-header">
-                <div class="error-output-copy">
-                  <div class="error-output-title-row">
-                    <span class="error-inline-icon">
-                      <CloseCircleOutlined />
-                    </span>
-                    <span class="error-output-title">
-                      {{ getErrorBlockTitle(block) }}
-                    </span>
-                    <span v-if="block.subtitle" class="error-output-subtitle">
-                      {{ block.subtitle }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="error-output-body answer-content"
-                v-html="renderMarked(block.content)"
-                @click="handleContentClick"
-              ></div>
-            </div>
-
-            <div v-else class="tool-output-card inline-tool-block">
-              <div class="tool-output-header">
-                <div class="tool-output-copy">
-                  <div class="tool-output-title-row">
-                    <span class="tool-inline-icon">
-                      <ToolOutlined />
-                    </span>
-                    <span class="tool-output-title">
-                      {{ getToolBlockTitle(block) }}
-                    </span>
-                    <span v-if="block.subtitle" class="tool-output-subtitle">
-                      {{ block.subtitle }}
-                    </span>
-                    <span v-if="block.tag" class="tool-output-tag">
-                      {{ block.tag }}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  v-if="block.collapsible"
-                  type="button"
-                  class="tool-toggle-btn"
-                  @click="toggleBlockCollapse(block.id)"
-                >
-                  <CaretDownOutlined
-                    :class="{ collapsed: isBlockCollapsed(block.id) }"
-                  />
-                </button>
-              </div>
-              <div
-                v-show="!isBlockCollapsed(block.id)"
-                class="tool-output-body answer-content"
-                v-html="renderToolContent(block.content)"
-                @click="handleContentClick"
-              ></div>
-            </div>
-          </template>
-        </div>
       </div>
     </div>
   </div>
@@ -284,9 +241,9 @@ import type {
 import {
   BulbOutlined,
   CaretDownOutlined,
-  CloseCircleOutlined,
   ToolOutlined,
 } from "@ant-design/icons-vue";
+import DOMPurify from "dompurify";
 import "highlight.js/styles/atom-one-dark.css";
 import { marked } from "marked";
 import { computed, ref, watch } from "vue";
@@ -359,10 +316,6 @@ const displayBlocks = computed<ChatMessageBlock[]>(() => {
   ];
 });
 
-const displayErrorBlocks = computed<ChatMessageBlock[]>(() => {
-  return displayBlocks.value.filter((block) => block.kind === "error");
-});
-
 const isToolLikeBlock = (block: ChatMessageBlock) => {
   return block.kind === "tool-call" || block.kind === "tool-result";
 };
@@ -392,60 +345,17 @@ const getAgentCardClass = (agent: ChatAgentRun) => {
   };
 };
 
-const translateKnownThinkingTitle = (title: string) => {
-  const normalizedTitle = title.trim().toLowerCase();
-
-  if (!normalizedTitle || normalizedTitle === "thinking") {
-    return t("chat.thinkingTitle");
-  }
-
-  return title;
-};
-
-const translateKnownToolTitle = (title: string) => {
-  const normalizedTitle = title.trim().toLowerCase();
-
-  if (!normalizedTitle) {
+const getAgentDisplayTitle = (agent: ChatAgentRun) => {
+  if (!agent.title) {
     return "";
   }
 
-  if (normalizedTitle === "tool") {
-    return t("chat.toolCallTitle");
+  const normalizedTitle = agent.title.trim().toLowerCase();
+  if (normalizedTitle === "main agent" || normalizedTitle === "sub agent") {
+    return "";
   }
 
-  if (normalizedTitle === "tool output") {
-    return t("chat.toolTitle");
-  }
-
-  return title;
-};
-
-const getToolSegmentTitle = (title: string) => {
-  return translateKnownToolTitle(title) || t("chat.toolCallTitle");
-};
-
-const getToolBlockTitle = (block: ChatMessageBlock) => {
-  const translatedTitle = translateKnownToolTitle(block.title || "");
-  if (translatedTitle) {
-    return translatedTitle;
-  }
-
-  return block.kind === "tool-result"
-    ? t("chat.toolTitle")
-    : t("chat.toolCallTitle");
-};
-
-const getThinkingBlockTitle = (block: ChatMessageBlock) => {
-  return translateKnownThinkingTitle(block.title || "");
-};
-
-const getErrorBlockTitle = (block: ChatMessageBlock) => {
-  const normalizedTitle = (block.title || "").trim().toLowerCase();
-  if (!normalizedTitle || normalizedTitle === "error") {
-    return t("common.error");
-  }
-
-  return block.title;
+  return agent.title;
 };
 
 const showSubAgentToolSegmentHeader = () => {
@@ -468,13 +378,9 @@ const isOuterToolBadge = computed(() => {
 watch(
   () => [props.message.id, props.message.contentBlocks],
   () => {
-    const nextState: Record<string, boolean> = {
-      ...collapsedBlockState.value,
-    };
+    const nextState: Record<string, boolean> = {};
     displayBlocks.value.forEach((block) => {
-      if (!(block.id in nextState)) {
-        nextState[block.id] = Boolean(block.startsCollapsed);
-      }
+      nextState[block.id] = Boolean(block.startsCollapsed);
     });
     collapsedBlockState.value = nextState;
   },
@@ -491,13 +397,8 @@ watch(
           return;
         }
 
-        if (isSubAgent(agent)) {
-          nextState[segment.id] = false;
-          return;
-        }
-
         if (!(segment.id in nextState)) {
-          nextState[segment.id] = true;
+          nextState[segment.id] = false;
         }
       });
     });
@@ -506,13 +407,42 @@ watch(
   { immediate: true, deep: true },
 );
 
-const renderMarked = (content: string) => marked(content || "");
+const normalizeMarkdownContent = (content: string) => {
+  return (content || "")
+    .replace(/(!\[[^\]]*\]\([^\n)]*)）/g, "$1)")
+    .replace(/(\[[^\]]+\]\([^\n)]*)）/g, "$1)");
+};
+
+const renderMarked = (content: string) =>
+  DOMPurify.sanitize(
+    marked(normalizeMarkdownContent(content), { async: false }),
+    {
+      ADD_ATTR: ["target"],
+    },
+  );
+
+const looksLikeMarkdown = (content: string) => {
+  const normalizedContent = content.trim();
+  if (!normalizedContent) {
+    return false;
+  }
+
+  return /(^|\n)\s*(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|!\[[^\]]*\]\([^\)]*\)|\[[^\]]+\]\([^\)]*\)|\|.+\|)/.test(
+    normalizedContent,
+  );
+};
 
 const renderToolContent = (content: string) => {
   const parsedJson = parseJsonString(content);
   if (parsedJson !== null) {
     return `<pre class="tool-json-block"><code>${escapeHtml(
       JSON.stringify(parsedJson, null, 2),
+    )}</code></pre>`;
+  }
+
+  if (content.includes("\n") && !looksLikeMarkdown(content)) {
+    return `<pre class="tool-plain-text-block"><code>${escapeHtml(
+      content,
     )}</code></pre>`;
   }
 
@@ -679,11 +609,6 @@ const handleContentClick = (event: MouseEvent) => {
   gap: 8px;
 }
 
-.error-output-card {
-  .flex-column;
-  gap: 8px;
-}
-
 .inline-tool-block {
   padding: 8px 10px;
   border: 1px solid var(--border-warning);
@@ -702,13 +627,6 @@ const handleContentClick = (event: MouseEvent) => {
   );
 }
 
-.inline-error-block {
-  padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--color-error) 42%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-error) 10%, transparent);
-}
-
 .tool-output-header {
   display: flex;
   align-items: flex-start;
@@ -717,13 +635,6 @@ const handleContentClick = (event: MouseEvent) => {
 }
 
 .thinking-output-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.error-output-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -740,11 +651,6 @@ const handleContentClick = (event: MouseEvent) => {
   min-width: 0;
 }
 
-.error-output-copy {
-  flex: 1;
-  min-width: 0;
-}
-
 .tool-output-title-row {
   display: flex;
   align-items: center;
@@ -753,13 +659,6 @@ const handleContentClick = (event: MouseEvent) => {
 }
 
 .thinking-output-title-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.error-output-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -790,22 +689,6 @@ const handleContentClick = (event: MouseEvent) => {
   font-size: var(--font-size-12);
 }
 
-.error-inline-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  background: color-mix(
-    in srgb,
-    var(--color-error) 16%,
-    var(--surface-panel-bg)
-  );
-  color: var(--color-error);
-  font-size: var(--font-size-12);
-}
-
 .tool-output-title {
   font-size: var(--font-size-13);
   font-weight: 700;
@@ -816,12 +699,6 @@ const handleContentClick = (event: MouseEvent) => {
   font-size: var(--font-size-13);
   font-weight: 700;
   color: var(--color-purple);
-}
-
-.error-output-title {
-  font-size: var(--font-size-13);
-  font-weight: 700;
-  color: var(--color-error);
 }
 
 .tool-output-subtitle {
@@ -847,12 +724,6 @@ const handleContentClick = (event: MouseEvent) => {
 .thinking-output-subtitle {
   font-size: var(--font-size-11);
   color: color-mix(in srgb, var(--color-purple) 78%, var(--font-tip-color));
-  word-break: break-word;
-}
-
-.error-output-subtitle {
-  font-size: var(--font-size-11);
-  color: color-mix(in srgb, var(--color-error) 78%, var(--font-tip-color));
   word-break: break-word;
 }
 
@@ -898,24 +769,16 @@ const handleContentClick = (event: MouseEvent) => {
   background: color-mix(in srgb, var(--surface-panel-bg) 78%, transparent);
 }
 
+.tool-output-body :deep(img) {
+  max-width: 160px !important;
+  width: auto !important;
+  height: auto;
+}
+
 .thinking-output-body {
   padding: 8px 10px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface-glass-bg) 72%, transparent);
-}
-
-.error-output-body {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: color-mix(
-    in srgb,
-    var(--color-error) 8%,
-    var(--surface-panel-bg)
-  );
-}
-
-.agent-error-list {
-  margin-top: 10px;
 }
 
 :deep(.tool-json-block) {
@@ -928,6 +791,22 @@ const handleContentClick = (event: MouseEvent) => {
 }
 
 :deep(.tool-json-block code) {
+  display: block;
+  white-space: inherit;
+  font-family: inherit;
+}
+
+:deep(.tool-plain-text-block) {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: var(--font-size-12);
+  line-height: 1.5;
+}
+
+:deep(.tool-plain-text-block code) {
   display: block;
   white-space: inherit;
   font-family: inherit;

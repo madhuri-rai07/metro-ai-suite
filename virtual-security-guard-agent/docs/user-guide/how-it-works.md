@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
    :description: Explains the Virtual Security Guard agent architecture and investigation flow.
    :keywords: Virtual Security Guard, VSS, agent architecture, investigation flow.
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -11,9 +13,10 @@ SPDX-License-Identifier: Apache-2.0
 
 # How It Works
 
-The operator interacts with the VSG agent, named **Argus**, in the browser. The
-agent runs on a Hermes agent server, reasons with a local model, and calls VSS
-tools through the VSS server, which exposes them using the Model Context Protocol (MCP). The VSG UI renders the agent's results and lets operators review them.
+The operator uses the VSG agent console in a browser to interact with **Argus**, the
+VSG agent. Argus runs on a Hermes agent server, reasons with a local model, and
+calls VSS tools through the VSS Model Context Protocol (MCP) server. The console
+renders Argus’s results and lets operators review them.
 
 ## Architecture
 
@@ -34,8 +37,9 @@ tools through the VSS server, which exposes them using the Model Context Protoco
 
 1. **Search**: The UI uploads the photo to VSS and starts a VSG agent run. The VSG agent
    calls `vss_search_video`.
-2. **Review**: The UI displays VSS results in a grid. The operator confirms the right
-   sightings; the others count as false positives.
+2. **Review**: The UI displays VSS results in a grid. The operator confirms the sightings
+   that match. If at least one is confirmed, the other shown matches are sent to Argus as
+   false positives; if none are confirmed, no feedback is sent.
 3. **Crop and search again** (optional): The operator can crop a person from a clip and
    submit the crop as a new image search. The crop becomes the subject image.
 4. **Route**: Confirmed sightings from all grids appear in chronological order as a route

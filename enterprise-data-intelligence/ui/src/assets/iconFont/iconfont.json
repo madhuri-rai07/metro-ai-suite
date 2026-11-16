@@ -6,6 +6,48 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "44083901",
+      "name": "okf",
+      "font_class": "okf",
+      "unicode": "e608",
+      "unicode_decimal": 58888
+    },
+    {
+      "icon_id": "24185831",
+      "name": "more-vertical",
+      "font_class": "more-vertical",
+      "unicode": "e610",
+      "unicode_decimal": 58896
+    },
+    {
+      "icon_id": "37858762",
+      "name": "more-horizontal",
+      "font_class": "more-horizontal",
+      "unicode": "e65b",
+      "unicode_decimal": 58971
+    },
+    {
+      "icon_id": "36284955",
+      "name": "img-library",
+      "font_class": "img-library",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
+      "icon_id": "41832256",
+      "name": "knowledge-base1",
+      "font_class": "knowledge-base1",
+      "unicode": "e693",
+      "unicode_decimal": 59027
+    },
+    {
+      "icon_id": "45893376",
+      "name": "work-directory",
+      "font_class": "work-directory",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
       "icon_id": "31738165",
       "name": "subagent",
       "font_class": "subagent",

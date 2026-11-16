@@ -190,6 +190,7 @@ name is the event or caption text, up to 500 characters, and it lasts 30 seconds
 | No boxes, `mqtt_push_failed` or `nx_push_objects_rejected` in the log | Check that the integration is on for the camera (**Camera Settings** → **Integrations**), and that its credentials are stored (no `nx_integration_no_password_in_db`). |
 | No boxes, no MQTT messages | Check that VAP reaches the broker at `MQTT_HOST:MQTT_PORT`, and that the pipeline publishes on `object_tracking/nx:<device-uuid>`: `mosquitto_sub -h <MQTT_HOST> -p <MQTT_PORT> -t 'object_tracking/#' -v`. |
 | No boxes, pipeline and MQTT working | Close the camera view, stop and start the pipeline, and open the camera again; see [Limitations](#limitations). |
+| No boxes but bookmarks appear, camera has recording on | Stop and start the pipeline to recover. If recording was just enabled for this camera for the first time, also check **Camera Settings** → **Recording** and configure the schedule as desired. A newly enabled schedule is not always configured correctly, and detections are not seen until it is corrected. |
 | Boxes labelled `python.detected.object` | The model's labels are not in `label_map`. Add them, run `setup.sh` again, and [register the integration again](#register-the-integration-again). |
 
 ### Loitering events and captions

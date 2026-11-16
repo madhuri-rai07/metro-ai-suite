@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
    :description: Task guides for the Virtual Security Guard Agent console.
    :keywords: Virtual Security Guard Agent, console, task guides.
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation

@@ -5,6 +5,27 @@
 
 <template>
   <div class="home-layout">
+    <aside
+      ref="knowledgePaneRef"
+      class="knowledge-pane"
+      :class="{ collapsed: isKnowledgePaneCollapsed }"
+      :style="knowledgePaneStyle"
+    >
+      <KnowledgeBaseMenu
+        :collapsed="isKnowledgePaneCollapsed"
+        @toggle-collapse="handleKnowledgePaneCollapse"
+        @request-expand="expandKnowledgePane"
+      />
+
+      <button
+        v-if="!isKnowledgePaneCollapsed"
+        type="button"
+        class="knowledge-resize-handle"
+        aria-label="Resize knowledge pane"
+        @mousedown="startKnowledgeResize"
+      ></button>
+    </aside>
+
     <section class="chat-pane">
       <Chatqna />
     </section>
@@ -31,10 +52,31 @@
 import { BarChartOutlined } from "@ant-design/icons-vue";
 import { useI18n } from "vue-i18n";
 import TokenSaving from "@/components/TokenSaving.vue";
-import { Chatqna } from "./components/index";
+import { Chatqna, KnowledgeBaseMenu } from "./components/index";
 
 const { t } = useI18n();
 const isMonitorOpen = ref(false);
+const knowledgePaneRef = ref<HTMLElement | null>(null);
+const isKnowledgePaneCollapsed = ref(false);
+const knowledgePaneWidth = ref(320);
+const isKnowledgePaneResizing = ref(false);
+const knowledgePaneLeft = ref(0);
+
+const KNOWLEDGE_PANE_COLLAPSED_WIDTH = 88;
+const KNOWLEDGE_PANE_MIN_WIDTH = 280;
+const KNOWLEDGE_PANE_MAX_WIDTH = 420;
+
+const knowledgePaneStyle = computed(() => {
+  const width = isKnowledgePaneCollapsed.value
+    ? KNOWLEDGE_PANE_COLLAPSED_WIDTH
+    : knowledgePaneWidth.value;
+
+  return {
+    width: `${width}px`,
+    minWidth: `${width}px`,
+    flexBasis: `${width}px`,
+  };
+});
 
 const openMonitor = () => {
   isMonitorOpen.value = true;
@@ -43,6 +85,61 @@ const openMonitor = () => {
 const closeMonitor = () => {
   isMonitorOpen.value = false;
 };
+
+const handleKnowledgePaneCollapse = (collapsed: boolean) => {
+  isKnowledgePaneCollapsed.value = collapsed;
+};
+
+const expandKnowledgePane = () => {
+  isKnowledgePaneCollapsed.value = false;
+};
+
+const handleKnowledgePaneResize = (event: MouseEvent) => {
+  if (!isKnowledgePaneResizing.value) {
+    return;
+  }
+
+  const nextWidth = Math.min(
+    KNOWLEDGE_PANE_MAX_WIDTH,
+    Math.max(KNOWLEDGE_PANE_MIN_WIDTH, event.clientX - knowledgePaneLeft.value),
+  );
+
+  knowledgePaneWidth.value = nextWidth;
+};
+
+const stopKnowledgeResize = () => {
+  if (!isKnowledgePaneResizing.value) {
+    return;
+  }
+
+  isKnowledgePaneResizing.value = false;
+  document.body.style.cursor = "";
+  document.body.style.userSelect = "";
+};
+
+const startKnowledgeResize = (event: MouseEvent) => {
+  if (isKnowledgePaneCollapsed.value) {
+    return;
+  }
+
+  knowledgePaneLeft.value =
+    knowledgePaneRef.value?.getBoundingClientRect().left || 0;
+  isKnowledgePaneResizing.value = true;
+  document.body.style.cursor = "col-resize";
+  document.body.style.userSelect = "none";
+  event.preventDefault();
+};
+
+onMounted(() => {
+  window.addEventListener("mousemove", handleKnowledgePaneResize);
+  window.addEventListener("mouseup", stopKnowledgeResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("mousemove", handleKnowledgePaneResize);
+  window.removeEventListener("mouseup", stopKnowledgeResize);
+  stopKnowledgeResize();
+});
 </script>
 <style scoped lang="less">
 .home-layout {
@@ -55,10 +152,66 @@ const closeMonitor = () => {
   background: var(--bg-content-color);
 }
 
+.knowledge-pane,
 .chat-pane,
 .monitor-pane {
   min-height: 0;
   height: 100%;
+}
+
+.knowledge-pane {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  overflow: hidden;
+  padding-right: 12px;
+  border-radius: 24px;
+  background: var(--bg-card-color);
+  border: 1px solid
+    color-mix(in srgb, var(--border-primary) 38%, var(--border-main-color) 62%);
+  box-shadow: 0 8px 24px var(--bg-box-shadow);
+  margin-right: 12px;
+  transition:
+    width 0.22s ease,
+    min-width 0.22s ease,
+    flex-basis 0.22s ease,
+    box-shadow 0.2s ease;
+}
+
+.knowledge-pane.collapsed {
+  padding-right: 0;
+  box-shadow: 0 8px 18px
+    color-mix(in srgb, var(--bg-box-shadow) 82%, transparent);
+}
+
+.knowledge-resize-handle {
+  position: absolute;
+  top: 16px;
+  right: 0;
+  bottom: 16px;
+  width: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 2;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 44px;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    background: color-mix(in srgb, var(--border-primary) 78%, transparent);
+    transition: background 0.2s ease;
+  }
+
+  &:hover::before {
+    background: var(--color-primary-second);
+  }
 }
 
 .chat-pane {
@@ -67,7 +220,7 @@ const closeMonitor = () => {
   overflow: hidden;
   border-radius: 24px;
   background: var(--bg-content-color);
-  border: 1px solid var(--border-main-color);
+  box-shadow: 0 8px 24px var(--bg-box-shadow);
   transition: width 0.24s ease;
 }
 
@@ -84,7 +237,7 @@ const closeMonitor = () => {
 }
 
 .monitor-pane.open {
-  width: 380px;
+  width: 360px;
   opacity: 1;
   pointer-events: auto;
   margin-left: 12px;
@@ -168,36 +321,34 @@ const closeMonitor = () => {
   line-height: 1;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .home-layout {
     padding-right: 12px;
-    overflow-x: auto;
-    overflow-y: hidden;
   }
 
-  .chat-pane {
-    flex: 1 0 640px;
+  .knowledge-pane {
+    max-width: 280px;
   }
 
   .monitor-pane {
-    position: relative;
-    top: auto;
-    right: auto;
-    bottom: auto;
-    width: 0;
-    min-width: 0;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: min(360px, calc(100vw - 24px));
+    transform: translateX(calc(100% + 12px));
     opacity: 0;
     pointer-events: none;
     transition:
-      width 0.24s ease,
+      transform 0.24s ease,
       opacity 0.2s ease;
   }
 
   .monitor-pane.open {
-    width: min(320px, calc(100vw - 48px));
+    width: min(360px, calc(100vw - 24px));
+    transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
-    margin-left: 12px;
   }
 
   .monitor-trigger {
@@ -206,8 +357,8 @@ const closeMonitor = () => {
 }
 
 @media (max-width: 768px) {
-  .chat-pane {
-    flex-basis: 560px;
+  .knowledge-pane {
+    display: none;
   }
 
   .monitor-trigger {

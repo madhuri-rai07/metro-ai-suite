@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
     :description: Hardware, software, and network requirements for the Virtual Security Guard Agent.
     :keywords: Virtual Security Guard Agent, system requirements, hardware, software, VSS, Hermes
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -11,8 +13,11 @@ SPDX-License-Identifier: Apache-2.0
 
 # System Requirements
 
-The Virtual Security Guard Agent (VSG) itself has light resource requirements.
-Video Search and Summarization (VSS) and the model used by the VSG agent on the Hermes agent server account for most compute needs. Consult their respective documentation for sizing details.
+The VSG agent console container has light resource requirements.
+
+VSS and the model used by the VSG agent on the Hermes agent server account
+for most compute needs. Consult their respective documentation for sizing
+details.
 
 ## Validated Platforms
 
@@ -80,7 +85,7 @@ performance or accuracy.
 
 | Port | Service | Reached by |
 |---|---|---|
-| `12346` | VSG console (`VSG_UI_PORT`) | The browser needs only this port. |
+| `12346` | VSG agent console (`VSG_UI_PORT`) | The browser needs only this port. |
 | `8642` | Hermes API server | The VSG container. |
 | `12345` | VSS NGINX gateway, including the VSS MCP server at `/mcp` | The VSG container and the Hermes agent server. |
 | `8010` | Inference Router, on the `<HOST_IP>` given to the installer | Hermes agent server, on the same host. |

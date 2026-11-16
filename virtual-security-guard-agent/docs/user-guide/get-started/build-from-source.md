@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
    :description: Build the Virtual Security Guard Agent container image from source.
    :keywords: Virtual Security Guard Agent, VSG, build, source, Docker, GNU Make
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation

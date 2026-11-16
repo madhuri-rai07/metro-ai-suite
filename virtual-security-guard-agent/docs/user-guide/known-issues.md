@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
-   :description: Troubleshooting guidance for the Virtual Security Guard console.
+   :description: Troubleshooting guidance for the Virtual Security Guard Agent console.
    :keywords: Virtual Security Guard, troubleshooting, VSS, Hermes.
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -35,7 +37,7 @@ Checks:
   `API_SERVER_KEY`.
 - Behind a proxy: Add the Hermes and VSS hosts to `no_proxy`.
 
-## The VSG Agent Replies but No Grid Is Shown
+## The VSG Agent Replies but the Console Shows No Grid
 
 Symptoms:
 
@@ -144,8 +146,8 @@ Checks:
 Details:
 
 - Generated PDFs are kept in browser memory for the open tab only. Use
-  **Reports → Open in Argus** to open a past investigation on the VSG agent's
-  **Argus** page and generate the PDF again from its report draft.
+  **Reports → Open in Argus** to open a past investigation in the console’s Argus
+  page, then generate the PDF again from Argus’s report draft.
 
 ## Floorplan and Settings Are Per Browser
 

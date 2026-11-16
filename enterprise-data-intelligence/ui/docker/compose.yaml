@@ -2,19 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 services:
-  office-poc-ui:
-    image: ${REGISTRY:-opea}/office-poc-ui:${TAG:-latest}
-    container_name: office-poc-ui
+  enterprise-data-intelligence-ui:
+    image: ${REGISTRY:-opea}/enterprise-data-intelligence-ui:${TAG:-latest}
+    container_name: enterprise-data-intelligence-ui
     environment:
       no_proxy: ${no_proxy:-}
       http_proxy: ${http_proxy:-}
       https_proxy: ${https_proxy:-}
       UI_PORT: ${UI_PORT:-7000}
       SERVER_HOST: ${SERVER_HOST:-127.0.0.1}
-      STATS_API_PORT: ${STATS_API_PORT:-8000}
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/}
-      VITE_AUTH_TOKEN: ${VITE_AUTH_TOKEN:?VITE_AUTH_TOKEN is required}
+      METRICS_API_PORT: ${METRICS_API_PORT:-8000}
+      LIBRARY_API_PORT: ${LIBRARY_API_PORT:-16022}
+      APP_API_PORT: ${APP_API_PORT:-16020}
+      WORKSPACE_API_PORT: ${WORKSPACE_API_PORT:-3001}
       VITE_CHATBOT_WS_PORT: ${VITE_CHATBOT_WS_PORT:-18789}
-      VITE_CHATBOT_URL: ${VITE_CHATBOT_URL:-/ws}
     restart: always
     network_mode: host

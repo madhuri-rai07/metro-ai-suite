@@ -171,7 +171,7 @@ as an RTSP stream. No video is bundled with this application.
    docker run -d --rm --name rtsp-server -p 8554:8554 bluenviron/mediamtx:1.9.3
    ```
 
-3. Publish the video in a loop to the RTSP server (requires `ffmpeg`, install it if necessary:
+3. Publish the video in a loop to the RTSP server (requires `ffmpeg`, install it if necessary):
 
    ```bash
    sudo apt install ffmpeg

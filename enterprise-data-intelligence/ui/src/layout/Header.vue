@@ -5,7 +5,7 @@
 
 <template>
   <div class="header-wrap">
-    <h1>Enterprise Al Automation</h1>
+    <h1>{{ $t("headerTitle") }}</h1>
     <div class="setting-wrap">
       <a-dropdown>
         <div @click.prevent>
@@ -42,7 +42,6 @@
 
 <script lang="ts" setup name="Header">
 import DarkIcon from "@/assets/svgs/dark-icon.svg";
-import headerLog from "@/assets/svgs/header-log.svg";
 import LightIcon from "@/assets/svgs/light-icon.svg";
 import SvgIcon from "@/components/SvgIcon.vue";
 import { themeAppStore } from "@/store/theme";
@@ -54,9 +53,9 @@ const emit = defineEmits(["change-theme"]);
 const isDark = ref<boolean>(false);
 
 const currentLanguage = computed(() => locale.value);
-const handleLanguageChange = ({ key }: { key: string }) => {
-  locale.value = key;
-  themeStore.toggleLanguage(key);
+const handleLanguageChange = ({ key }: { key: string | number }) => {
+  locale.value = String(key);
+  themeStore.toggleLanguage(String(key));
 };
 const handleThemeChange = () => {
   isDark.value = !isDark.value;

@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
   :description: Search footage, review sightings, trace routes, run live searches, and create reports with the Virtual Security Guard Agent.
   :keywords: Virtual Security Guard Agent, VSG, investigation, person search, cameras, reports
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -25,11 +27,12 @@ review counts, and route.
    photo, use the image button or drag and drop the photo.
 3. Press **Enter** or click the send button.
 
-VSG uploads the photo to VSS, creates a Hermes session for the investigation,
-and starts a VSG agent run. The VSG agent calls the VSS search tool and replies
-with a short summary and a grid of potential matches. The search covers all
-footage indexed by VSS, including uploaded videos and footage already recorded
-by live cameras. Each match names its camera by tag, for example, `camera_1`.
+The console uploads the photo to VSS. A Hermes session is created for the
+investigation, and an Argus run starts. Argus calls the VSS search tool and
+replies with a short summary and potential matches, which the console displays
+in a grid. The search covers all footage indexed by VSS, including uploaded
+videos and footage already recorded by live cameras. Each match shows its camera
+tag when available, for example, `camera_1`.
 
 Your message appears on the right, with a photo above it. The VSG agent's reply
 appears on the left, next to its eye icon. It contains a short summary of what
@@ -52,8 +55,9 @@ The VSG agent may mark recommended cards as **Argus pick**.
 
 - Click **Show N more findings** to reveal six more at a time, up to **20**.
 - Click a thumbnail to open the clip player.
-- Click **Confirm** on every card that shows the subject. Anything shown but
-  left unconfirmed is sent to the VSG agent as a false positive.
+- Click **Confirm** on every card that shows the subject. When you save a review
+  with at least one confirmed match, shown but unconfirmed matches are sent to
+  Argus as false positives. If none match, select None match; no feedback is sent.
 - Click **Save N confirmed**. If nothing matches, click **None match**. If
   matches are still hidden, the button reads **None match, show N more** and
   shows them first. This sends nothing and starts no new search. The footer
@@ -120,8 +124,8 @@ live search.
 
 - VSS watches live cameras for the subject, and the UI polls every 10 seconds.
   The eye in the Argus logo scans while the search runs.
-- Sightings appear in a **live timeline**, newest first. Detections on one
-  camera that occur less than a minute apart are grouped into one sighting. It
+- Sightings appear in a **live timeline**, newest first. Detections on one camera
+  that occur no more than a minute apart are grouped into one sighting. It
   has a start time, an end time (**now** while the person is still there), and
   a detection count. A new sighting is highlighted with a **New** badge for a
   few seconds.
@@ -160,7 +164,8 @@ report on the person in the black t-shirt."
 ![Handover report draft from the VSG agent](../_assets/report-draft.jpg "Report draft")
 
 The browser creates the report files. The **Reports** page lists the latest
-report for each past investigation.
+report for each loaded investigation. Select **Load older** to check older
+investigations.
 
 ![Reports page](../_assets/reports.jpg "Reports")
 

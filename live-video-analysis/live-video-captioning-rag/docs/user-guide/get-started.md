@@ -14,7 +14,7 @@ By following this guide, you will learn how to:
 - Install Docker platform: [Installation Guide](https://docs.docker.com/get-docker/).
 - Install Docker Compose tool: [Installation Guide](https://docs.docker.com/compose/install/).
 - OpenVINO toolkit-compatible VLM/LLM. Follow the guide in [section](#3-download-models-one-time) below.
-- If the sample application is used with RTSP streams, set up the RTSP stream source (live camera or test feed), or simulated RTSP stream source using local video files, separately. Refer to [the instructions](../../../live-video-captioning/docs/user-guide/get-started/simulated-rtsp-stream-guide.md) for details.
+- If the sample application is used with RTSP streams, set up the RTSP stream source (live camera or test feed), or simulated RTSP stream source using local video files, separately. Refer to [the instructions](https://docs.openedgeplatform.intel.com/dev/edge-ai-suites/live-video-captioning/get-started/simulated-rtsp-stream-guide.html) for details.
 
 ## Run the Application
 
@@ -48,6 +48,7 @@ bash scripts/setup_env.sh --force
 ```
 
 This script sets the following important values:
+
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `HOST_IP` | `(auto-detected)` | Host address advertised to browsers on other machines for WebRTC media. Not needed when the browser runs on the same host. |
@@ -130,7 +131,10 @@ Download the LLM model used for Retrieval-Augmented Generation (RAG). The follow
   --weight-format int8
 ```
 
-> Note: NPU support is limited to a subset of LLMs. Refer to the [OpenVINO LLMs Hugging Face collection](https://huggingface.co/collections/OpenVINO/llms-optimized-for-npu) for supported models. Open the model card, identify the `Original model`, and use that model name when downloading the model with the download script.
+> [!NOTE]
+> NPU support is limited to a subset of LLMs. Refer to the [OpenVINO LLMs Hugging Face collection](https://huggingface.co/collections/OpenVINO/llms-optimized-for-npu)
+> for supported models. Open the model card, identify the `Original model`, and use that model
+> name when downloading the model with the download script.
 
 This stores the model under `llm_models/`.
 
@@ -146,15 +150,17 @@ docker compose up -d
 
 > [!NOTE]
 > Docker Compose automatically reads values from `.env` in the project root.
-
-> [!NOTE]
-> The application will take some time to start. Check the container status and ensure that they are in the `"healthy/running"` state using the `docker ps` command before accessing the application.
+>
+> ---
+>
+> The application will take some time to start. Check the container status and ensure that
+> their status is `"healthy/running"` by using the `docker ps` command before accessing the application.
 
 ### 5. Access the application
 
 Follow these steps to use the application:
 
-1. Open the Live Video Captioning UI.
+1. Open the Live Video Captioning UI:
 
    Open the dashboard from a browser on the same host at `http://localhost:4173`.
 
@@ -173,7 +179,7 @@ docker compose down
 
 ## Troubleshooting
 
-###  Live Caption RAG dashboard Does not Open or is Unreachable
+### Live Caption RAG dashboard Does not Open or is Unreachable
 
 - Confirm that `live-video-captioning-rag` container is running.
 - Confirm that port mapping `${LIVE_VIDEO_RAG_HOST_PORT:-4172}:4172` is available.

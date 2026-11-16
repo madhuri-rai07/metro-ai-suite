@@ -238,7 +238,7 @@ services:
       start_period: 10s
 
   web:
-    image: intel/scenescape-manager:2026.3.0-rc1
+    image: intel/scenescape-manager:${SCENESCAPE_IMAGE_TAG}
     init: true
     networks:
       scenescape:
@@ -295,7 +295,7 @@ services:
     restart: on-failure:5
 
   scene-uploader:
-    image: intel/scenescape-manager:2026.3.0-rc1
+    image: intel/scenescape-manager:${SCENESCAPE_IMAGE_TAG}
     entrypoint: ["upload-scenes"]
     command:
       - --restauth
@@ -323,7 +323,7 @@ services:
     restart: "no"
 
   scene:
-    image: intel/scenescape-controller:2026.3.0-rc1
+    image: intel/scenescape-controller:${SCENESCAPE_IMAGE_TAG}
     init: true
     environment:
       - http_proxy=${http_proxy}
@@ -367,7 +367,7 @@ services:
     restart: on-failure:5
 
   analytics:
-    image: intel/scenescape-analytics:2026.3.0-rc1
+    image: intel/scenescape-analytics:${SCENESCAPE_IMAGE_TAG}
     init: true
     environment:
       - http_proxy=${http_proxy}

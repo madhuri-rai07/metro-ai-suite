@@ -20,11 +20,13 @@ const alias: Record<string, string> = {
 
 const viteConfig = defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const serverHost = process.env.SERVER_HOST || env.SERVER_HOST || "127.0.0.1";
-  const statsApiTarget =
-    process.env.VITE_DEV_STATS_API_TARGET ||
-    env.VITE_DEV_STATS_API_TARGET ||
-    `http://${serverHost}:8000`;
+  const serverHost =
+    process.env.SERVER_HOST || env.SERVER_HOST || "10.239.58.135";
+  const metricsApiTarget = `http://${serverHost}:8000`;
+  const libraryApiTarget = `http://${serverHost}:16022`;
+  const appApiTarget = `http://${serverHost}:16020`;
+  const fileApiTarget = `http://${serverHost}:3001`;
+  const wsTarget = "ws://127.0.0.1:18789";
 
   return {
     plugins: [
@@ -48,12 +50,35 @@ const viteConfig = defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 7000,
+      strictPort: true,
       hmr: true,
       allowedHosts: ["edgeainode1.sh.intel.com"],
       proxy: {
-        "/v1/": {
-          target: statsApiTarget,
+        "/library-api/": {
+          target: libraryApiTarget,
           changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/library-api\//, "/"),
+        },
+        "/app-api/": {
+          target: appApiTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/app-api\//, "/"),
+        },
+        "/metrics-api/": {
+          target: metricsApiTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/metrics-api\//, "/"),
+        },
+        "/workspace-api/": {
+          target: fileApiTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/workspace-api\//, "/"),
+        },
+        "/ws": {
+          target: wsTarget,
+          changeOrigin: true,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/ws(?=\/|$)/, "") || "/",
         },
       },
     },

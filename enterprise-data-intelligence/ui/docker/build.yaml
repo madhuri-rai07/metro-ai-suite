@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 services:
-  office-poc-ui:
-    image: ${REGISTRY:-opea}/office-poc-ui:${TAG:-latest}
+  enterprise-data-intelligence-ui:
+    image: ${REGISTRY:-opea}/enterprise-data-intelligence-ui:${TAG:-latest}
     build:
       context: ../..
       dockerfile: ./ui/docker/Dockerfile.ui

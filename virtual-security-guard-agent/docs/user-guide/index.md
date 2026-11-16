@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
     :description: Overview of Virtual Security Guard Agent features and use cases.
     :keywords: Virtual Security Guard Agent, video search, security, camera monitoring
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -11,12 +13,12 @@ SPDX-License-Identifier: Apache-2.0
 
 # Virtual Security Guard Agent
 
-**Virtual Security Guard Agent (VSG)** is an operator console for the **VSG
-agent**, an AI security agent named **Argus** that runs on a **Hermes** agent
-server. The VSG agent searches recorded and live camera footage through Intel®
-**Video Search and Summarization (VSS)**. Hermes cannot show video or images,
-so VSG renders what the VSG agent finds: match grids for human review, a floorplan
-route, live camera matches, and PDF incident reports.
+The **Virtual Security Guard (VSG) Agent** console is the operator interface. It
+connects to **Argus**, the VSG agent that runs on a **Hermes** agent server.
+The VSG agent searches recorded and live camera footage through Intel's
+**Video Search and Summarization (VSS)** application. The Hermes agent server cannot
+show video or images, so the VSG agent console displays the agent's results as match grids
+for human review, a floorplan route, live camera matches, and PDF incident reports.
 
 ![Architecture: operator browser, vsg-ui container, Hermes agent, VSS MCP server, VSS gateway and model server](./_assets/vsg-architecture.svg)
 
@@ -25,8 +27,8 @@ route, live camera matches, and PDF incident reports.
 | Feature | What it does |
 |---|---|
 | Chat-driven search | Describe a person, attach a photo, or both. The VSG agent calls `vss_search_video` and returns ranked sightings. |
-| Human-in-the-loop review | The console presents top matches in a 3×2 grid. Each search can return up to 20 matches. The operator confirms matches, and unconfirmed matches go back to the VSG agent as false positives. |
-| Crop and re-search | Crop the person from a clip frame; the VSG agent searches again with that image. |
+| Human-in-the-loop review | The console initially shows the top matches; on wide screens, they appear in a 3×2 grid. Operators can reveal up to 20 matches. The operator confirms matches. When a review includes at least one confirmed match, shown unconfirmed matches are sent to Argus as false positives.|
+| Crop and re-search | The operator crops the person from a clip frame in the console. The console sends the crop to VSS, and Argus runs another image search. |
 | Floorplan route | The console draws confirmed sightings in time order from camera to camera on an uploaded floorplan. |
 | Live camera search | After the operator consents, VSS watches live cameras, and the console maintains a live timeline of sightings for each camera. |
 | Incident reports | The VSG agent drafts a report from confirmed sightings; the operator edits it and exports a PDF in the browser. |

@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
    :description: Set up and run the Virtual Security Guard Agent console.
    :keywords: Virtual Security Guard Agent, VSG, setup, Docker, Hermes, VSS
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -11,10 +13,10 @@ SPDX-License-Identifier: Apache-2.0
 
 # Get Started
 
-The **Virtual Security Guard Agent (VSG)** runs as a single container that serves
-the console and proxies requests to two upstreams: the **Hermes** agent API and
-the Video Search and Summarization (VSS) gateway. The VSG agent runs on the
-Hermes agent server. The console has no backend or database of its own.
+The **Virtual Security Guard Agent (VSG) Agent** console runs in a single container and
+proxies requests to two upstreams: the **Hermes** API server and the **Video Search
+and Summarization (VSS)** gateway. Argus, the VSG agent, runs on the Hermes agent
+server. The console has no backend or database of its own.
 
 ## Prerequisites
 
@@ -100,7 +102,7 @@ as **Reachable**.
 
 ### 5. Run a Search
 
-Open the VSG agent's **Argus** page at `http://<HOST_IP>:12346/argus`, then:
+Open the console's **Argus** page at `http://<HOST_IP>:12346/argus`, then:
 
 1. Describe the person, attach a photo, or both. Optionally, name cameras or a
    time range in the text.

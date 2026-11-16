@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
   :description: Release notes for the Virtual Security Guard Agent.
   :keywords: Virtual Security Guard Agent, release notes, 2026.3.0-rc1.
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -13,8 +15,9 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Version 2026.3.0-rc1
 
-Virtual Security Guard (VSG) Agent is a new sample application that searches recorded and live
-camera footage through Intel's Video Search and Summarization (VSS).
+The Virtual Security Guard (VSG) Agent sample application provides an operator console
+for Argus, the agent that searches recorded and live camera footage through Intel's
+Video Search and Summarization (VSS) sample application.
 
 **New**:
 

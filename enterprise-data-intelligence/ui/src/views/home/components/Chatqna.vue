@@ -5,284 +5,318 @@
 
 <template>
   <div class="chat-container">
-    <div class="chat-header">
-      <div class="header-left">
-        <div class="knowledge-badge">
-          <span class="badge-icon">
-            <SvgIcon
-              name="icon-chatbot1"
-              :size="24"
-              :style="{ color: 'var(--color-white)' }"
-            />
-          </span>
-        </div>
-        <div class="assistant-copy">
-          <div class="assistant-title">{{ $t("chat.assistant") }}</div>
-          <div class="assistant-subtitle">
-            {{ $t("chat.housekeeperTagline") }}
-          </div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div v-if="selectedSessionLabel" class="selected-session-pill">
-          {{ selectedSessionLabel }}
-        </div>
-        <a-popover
-          placement="bottomRight"
-          trigger="hover"
-          overlay-class-name="session-history-popover"
-        >
-          <template #content>
-            <div class="session-history-panel">
-              <div class="session-history-title">
-                {{ $t("chat.sessionPlaceholder") }}
-              </div>
-              <div
-                v-if="isHistoryLoading && !displaySessionGroups.length"
-                class="session-history-empty"
-              >
-                {{ $t("chat.loadingHistory") }}
-              </div>
-              <div
-                v-for="group in displaySessionGroups"
-                :key="group.agentId"
-                class="session-agent-group"
-              >
-                <div class="session-agent-title">{{ group.displayName }}</div>
-                <div v-if="group.description" class="session-agent-description">
-                  {{ group.description }}
-                </div>
-                <button
-                  v-for="session in group.sessions"
-                  :key="session.key"
-                  type="button"
-                  class="session-history-item"
-                  :class="{ active: session.key === selectedSessionKey }"
-                  @click="handleSessionChange(session.key)"
-                >
-                  <span
-                    v-if="session.key === selectedSessionKey"
-                    class="session-history-check"
-                  >
-                    <SvgIcon
-                      name="icon-copy-success"
-                      :size="10"
-                      :style="{ color: 'var(--color-white)' }"
-                    />
-                  </span>
-                  <span class="session-history-name">
-                    {{ buildSessionOptionLabel(session) }}
-                  </span>
-                </button>
-              </div>
-              <div
-                v-if="!isHistoryLoading && !displaySessionGroups.length"
-                class="session-history-empty"
-              >
-                {{ $t("chat.noSessions") }}
-              </div>
-            </div>
-          </template>
-          <button
-            type="button"
-            class="header-status session-history-trigger"
-            :class="connectionStatus"
-            :title="connectionStatusLabel"
-            :disabled="!sessions.length && !isHistoryLoading"
-          >
-            <HistoryOutlined />
-          </button>
-        </a-popover>
-      </div>
-    </div>
-
-    <div class="chatbot-wrap" :class="{ 'has-messages': hasMessages }">
-      <div v-if="hasMessages" ref="scrollContainer" class="message-box">
-        <div class="intel-markdown">
-          <div ref="messageComponent">
-            <div v-for="(msg, index) in messagesList" :key="msg.id">
-              <MessageItem
-                :message="msg"
-                :message-index="index"
-                :is-streaming="isStreaming"
-                :last-query="isLastQuery(index)"
-                :last-response="isLastResponse(index)"
-                @preview="handleImagePreview"
-                @send-question="handleSendFollowup"
+    <GatewayConnection
+      v-if="showConnectionForm"
+      v-model:gateway-token="gatewayToken"
+      :status="connectionStatus"
+      :error="connectionError"
+      @connect="connectGateway"
+      @back="showConnectionForm = false"
+    />
+    <template v-else>
+      <div class="chat-header">
+        <div class="header-left">
+          <div class="knowledge-badge">
+            <span class="badge-icon">
+              <SvgIcon
+                name="icon-chatbot1"
+                :size="24"
+                :style="{ color: 'var(--color-white)' }"
               />
+            </span>
+          </div>
+          <div class="assistant-copy">
+            <div class="assistant-title">{{ $t("chat.assistant") }}</div>
+            <div class="assistant-subtitle">
+              {{ $t("chat.housekeeperTagline") }}
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="chat-content" :class="{ 'full-height': !hasMessages }">
-        <div v-if="!hasMessages" class="initial-input">
-          <div class="welcome-card">
-            <div class="welcome-eyebrow">{{ $t("chat.starterEyebrow") }}</div>
-            <div class="welcome-title">{{ $t("chat.starterTitle") }}</div>
-            <div class="welcome-description">
-              {{ $t("chat.starterDescription") }}
-            </div>
-            <div v-if="isHistoryLoading" class="session-loading-tip">
-              {{ $t("chat.loadingHistory") }}
-            </div>
+        <div class="header-right">
+          <a-tooltip :title="$t('chat.gateway.settings')">
+            <button
+              type="button"
+              class="header-status gateway-settings"
+              :aria-label="$t('chat.gateway.settings')"
+              @click="showConnectionForm = true"
+            >
+              <SettingOutlined />
+            </button>
+          </a-tooltip>
+          <div v-if="selectedSessionLabel" class="selected-session-pill">
+            {{ selectedSessionLabel }}
           </div>
-        </div>
-
-        <div
-          ref="inputRef"
-          class="input-wrap"
-          :class="{ 'is-home': !hasMessages }"
-        >
-          <div v-if="!hasMessages" class="composer-copy">
-            <div class="composer-title">{{ $t("chat.composerTitle") }}</div>
-            <div class="composer-hint">
-              {{
-                selectedSessionKey
-                  ? $t("chat.composerHint")
-                  : $t("chat.noSessions")
-              }}
-            </div>
-          </div>
-
-          <div v-if="showScrollToBottomBtn && hasMessages" class="bottom-wrap">
-            <div class="to-bottom" @click="scrollToBottom">
-              <ArrowDownOutlined />
-            </div>
-          </div>
-
-          <div class="composer-stack">
-            <div v-if="showCommandPalette" class="command-palette">
-              <div class="command-palette-header">
-                <span class="command-palette-title">{{
-                  $t("chat.commandPalette.title")
-                }}</span>
-                <span class="command-palette-tip">{{
-                  $t("chat.commandPalette.tip")
-                }}</span>
-              </div>
-              <div ref="commandPaletteScroll" class="command-palette-scroll">
+          <a-popover
+            placement="bottomRight"
+            trigger="hover"
+            overlay-class-name="session-history-popover"
+          >
+            <template #content>
+              <div class="session-history-panel">
+                <div class="session-history-title">
+                  {{ $t("chat.sessionPlaceholder") }}
+                </div>
                 <div
-                  v-for="group in filteredCommandGroups"
-                  :key="group.category"
-                  class="command-group"
+                  v-if="isHistoryLoading && !displaySessionGroups.length"
+                  class="session-history-empty"
                 >
-                  <div class="command-group-title">{{ group.label }}</div>
-                  <button
-                    v-for="option in group.commands"
-                    :key="option.command"
-                    type="button"
-                    class="command-item"
-                    :class="{
-                      active: option.command === activeCommand?.command,
-                    }"
-                    :data-command-id="option.command"
-                    @mousedown.prevent
-                    @mouseenter="setActiveCommand(option.command)"
-                    @click="handleCommandSelect(option)"
+                  {{ $t("chat.loadingHistory") }}
+                </div>
+                <div
+                  v-for="group in displaySessionGroups"
+                  :key="group.agentId"
+                  class="session-agent-group"
+                >
+                  <div class="session-agent-title">{{ group.displayName }}</div>
+                  <div
+                    v-if="group.description"
+                    class="session-agent-description"
                   >
-                    <span class="command-name">{{ option.command }}</span>
-                    <a-tooltip placement="topLeft" :title="option.description">
-                      <span class="command-description">{{
-                        option.description
-                      }}</span>
-                    </a-tooltip>
+                    {{ group.description }}
+                  </div>
+                  <button
+                    v-for="session in group.sessions"
+                    :key="session.key"
+                    type="button"
+                    class="session-history-item"
+                    :class="{ active: session.key === selectedSessionKey }"
+                    @click="handleSessionChange(session.key)"
+                  >
+                    <span
+                      v-if="session.key === selectedSessionKey"
+                      class="session-history-check"
+                    >
+                      <SvgIcon
+                        name="icon-copy-success"
+                        :size="10"
+                        :style="{ color: 'var(--color-white)' }"
+                      />
+                    </span>
+                    <span class="session-history-name">
+                      {{ buildSessionOptionLabel(session) }}
+                    </span>
                   </button>
                 </div>
+                <div
+                  v-if="!isHistoryLoading && !displaySessionGroups.length"
+                  class="session-history-empty"
+                >
+                  {{ $t("chat.noSessions") }}
+                </div>
               </div>
-              <div class="command-palette-shortcuts">
-                <span class="command-shortcut-item">
-                  <span class="command-shortcut-key">↑↓</span>
-                  <span class="command-shortcut-label">{{
-                    $t("chat.commandPalette.shortcuts.navigate")
-                  }}</span>
-                </span>
-                <span class="command-shortcut-item">
-                  <span class="command-shortcut-key">Tab</span>
-                  <span class="command-shortcut-label">{{
-                    $t("chat.commandPalette.shortcuts.fill")
-                  }}</span>
-                </span>
-                <span class="command-shortcut-item">
-                  <span class="command-shortcut-key">Enter</span>
-                  <span class="command-shortcut-label">{{
-                    $t("chat.commandPalette.shortcuts.send")
-                  }}</span>
-                </span>
-                <span class="command-shortcut-item">
-                  <span class="command-shortcut-key">Esc</span>
-                  <span class="command-shortcut-label">{{
-                    $t("chat.commandPalette.shortcuts.close")
-                  }}</span>
-                </span>
+            </template>
+            <button
+              type="button"
+              class="header-status session-history-trigger"
+              :class="connectionStatus"
+              :title="connectionStatusLabel"
+              :disabled="!sessions.length && !isHistoryLoading"
+            >
+              <HistoryOutlined />
+            </button>
+          </a-popover>
+        </div>
+      </div>
+
+      <div class="chatbot-wrap" :class="{ 'has-messages': hasMessages }">
+        <div v-if="hasMessages" ref="scrollContainer" class="message-box">
+          <div class="intel-markdown">
+            <div ref="messageComponent">
+              <div v-for="(msg, index) in messagesList" :key="msg.id">
+                <MessageItem
+                  :message="msg"
+                  :message-index="index"
+                  :is-streaming="isStreaming"
+                  :last-query="isLastQuery(index)"
+                  :last-response="isLastResponse(index)"
+                  @preview="handleImagePreview"
+                  @send-question="handleSendFollowup"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-content" :class="{ 'full-height': !hasMessages }">
+          <div v-if="!hasMessages" class="initial-input">
+            <div class="welcome-card">
+              <div class="welcome-eyebrow">{{ $t("chat.starterEyebrow") }}</div>
+              <div class="welcome-title">{{ $t("chat.starterTitle") }}</div>
+              <div class="welcome-description">
+                {{ $t("chat.starterDescription") }}
+              </div>
+              <div v-if="isHistoryLoading" class="session-loading-tip">
+                {{ $t("chat.loadingHistory") }}
+              </div>
+            </div>
+          </div>
+
+          <div
+            ref="inputRef"
+            class="input-wrap"
+            :class="{ 'is-home': !hasMessages }"
+          >
+            <div v-if="!hasMessages" class="composer-copy">
+              <div class="composer-title">{{ $t("chat.composerTitle") }}</div>
+              <div class="composer-hint">
+                {{
+                  selectedSessionKey
+                    ? $t("chat.composerHint")
+                    : $t("chat.noSessions")
+                }}
               </div>
             </div>
 
-            <div class="input-container" :class="{ 'is-home': !hasMessages }">
-              <a-textarea
-                v-model:value.trim="inputKeywords"
-                :placeholder="
-                  selectedSessionKey ? $t('chat.tip4') : $t('chat.noSessions')
-                "
-                :auto-size="{ minRows: 1, maxRows: 4 }"
-                :bordered="false"
-                :disabled="!selectedSessionKey || isHistoryLoading"
-                class="input-area"
-                @input="handleInputChange"
-                @keydown="handleComposerKeydown"
-              />
-              <div class="input-footer">
-                <div class="footer-right">
-                  <a-tooltip
-                    placement="top"
-                    :arrow="false"
-                    :title="$t('chat.new')"
+            <div
+              v-if="showScrollToBottomBtn && hasMessages"
+              class="bottom-wrap"
+            >
+              <div class="to-bottom" @click="scrollToBottom">
+                <ArrowDownOutlined />
+              </div>
+            </div>
+
+            <div class="composer-stack">
+              <div v-if="showCommandPalette" class="command-palette">
+                <div class="command-palette-header">
+                  <span class="command-palette-title">{{
+                    $t("chat.commandPalette.title")
+                  }}</span>
+                  <span class="command-palette-tip">{{
+                    $t("chat.commandPalette.tip")
+                  }}</span>
+                </div>
+                <div ref="commandPaletteScroll" class="command-palette-scroll">
+                  <div
+                    v-for="group in filteredCommandGroups"
+                    :key="group.category"
+                    class="command-group"
                   >
-                    <span class="common-btn">
-                      <SvgIcon
-                        name="icon-newChat"
-                        :style="{ color: 'var(--font-info-color)' }"
-                        @click="handleCreateSession"
-                      />
-                    </span>
-                  </a-tooltip>
-                  <div class="divider"></div>
-                  <a-button
-                    type="primary"
-                    class="action-btn"
-                    shape="circle"
-                    size="large"
-                    :disabled="
-                      (!isStreaming && !inputKeywords.trim()) ||
-                      (!isStreaming &&
-                        (!selectedSessionKey || isHistoryLoading))
-                    "
-                    @click="
-                      isStreaming ? handleStopChat() : handleSendMessage()
-                    "
-                  >
-                    <span v-if="!isStreaming" class="btn-icon">
-                      <SvgIcon
-                        name="icon-send2"
-                        :size="18"
-                        :style="{ color: 'var(--color-white)' }"
-                      />
-                    </span>
-                    <span v-else class="btn-icon">
-                      <SvgIcon
-                        name="icon-chat-stop"
-                        :size="18"
-                        :style="{ color: 'var(--color-white)' }"
-                      />
-                    </span>
-                  </a-button>
+                    <div class="command-group-title">{{ group.label }}</div>
+                    <button
+                      v-for="option in group.commands"
+                      :key="option.command"
+                      type="button"
+                      class="command-item"
+                      :class="{
+                        active: option.command === activeCommand?.command,
+                      }"
+                      :data-command-id="option.command"
+                      @mousedown.prevent
+                      @mouseenter="setActiveCommand(option.command)"
+                      @click="handleCommandSelect(option)"
+                    >
+                      <span class="command-name">{{ option.command }}</span>
+                      <a-tooltip
+                        placement="topLeft"
+                        :title="option.description"
+                      >
+                        <span class="command-description">{{
+                          option.description
+                        }}</span>
+                      </a-tooltip>
+                    </button>
+                  </div>
+                </div>
+                <div class="command-palette-shortcuts">
+                  <span class="command-shortcut-item">
+                    <span class="command-shortcut-key">↑↓</span>
+                    <span class="command-shortcut-label">{{
+                      $t("chat.commandPalette.shortcuts.navigate")
+                    }}</span>
+                  </span>
+                  <span class="command-shortcut-item">
+                    <span class="command-shortcut-key">Tab</span>
+                    <span class="command-shortcut-label">{{
+                      $t("chat.commandPalette.shortcuts.fill")
+                    }}</span>
+                  </span>
+                  <span class="command-shortcut-item">
+                    <span class="command-shortcut-key">Enter</span>
+                    <span class="command-shortcut-label">{{
+                      $t("chat.commandPalette.shortcuts.send")
+                    }}</span>
+                  </span>
+                  <span class="command-shortcut-item">
+                    <span class="command-shortcut-key">Esc</span>
+                    <span class="command-shortcut-label">{{
+                      $t("chat.commandPalette.shortcuts.close")
+                    }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="input-container" :class="{ 'is-home': !hasMessages }">
+                <a-textarea
+                  v-model:value.trim="inputKeywords"
+                  :placeholder="
+                    selectedSessionKey ? $t('chat.tip4') : $t('chat.noSessions')
+                  "
+                  :auto-size="{ minRows: 1, maxRows: 4 }"
+                  :bordered="false"
+                  class="input-area"
+                  :disabled="!selectedSessionKey || isHistoryLoading"
+                  @input="handleInputChange"
+                  @keydown.enter="handleEnterPress"
+                  @keydown.up="handleCommandArrow('up', $event)"
+                  @keydown.down="handleCommandArrow('down', $event)"
+                  @keydown.tab="handleCommandTab"
+                  @keydown.esc="handleCommandEscape"
+                />
+                <div class="input-footer">
+                  <div class="footer-right">
+                    <a-tooltip
+                      placement="top"
+                      :arrow="false"
+                      :title="$t('chat.new')"
+                    >
+                      <span class="common-btn">
+                        <SvgIcon
+                          name="icon-newChat"
+                          :size="18"
+                          :style="{ color: 'var(--font-info-color)' }"
+                          @click="handleCreateSession"
+                        />
+                      </span>
+                    </a-tooltip>
+                    <div class="divider"></div>
+                    <a-button
+                      type="primary"
+                      class="action-btn"
+                      shape="circle"
+                      size="large"
+                      :disabled="
+                        (!isStreaming && !inputKeywords.trim()) ||
+                        (!isStreaming &&
+                          (!selectedSessionKey || isHistoryLoading))
+                      "
+                      @click="
+                        isStreaming ? handleStopChat() : handleSendMessage()
+                      "
+                    >
+                      <span v-if="!isStreaming" class="btn-icon">
+                        <SvgIcon
+                          name="icon-send2"
+                          :size="18"
+                          :style="{ color: 'var(--color-white)' }"
+                        />
+                      </span>
+                      <span v-else class="btn-icon">
+                        <SvgIcon
+                          name="icon-chat-stop"
+                          :size="18"
+                          :style="{ color: 'var(--color-white)' }"
+                        />
+                      </span>
+                    </a-button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 
   <a-image
@@ -296,7 +330,11 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowDownOutlined, HistoryOutlined } from "@ant-design/icons-vue";
+import {
+  ArrowDownOutlined,
+  HistoryOutlined,
+  SettingOutlined,
+} from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import { throttle } from "lodash-es";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
@@ -307,6 +345,7 @@ import {
   COMMAND_CATEGORY_ORDER,
   type ChatCommandDefinition,
 } from "./chatCommandPalette.ts";
+import GatewayConnection from "./GatewayConnection.vue";
 import { MessageItem } from "./index";
 import {
   type ChatMessageView,
@@ -335,6 +374,9 @@ const isStreaming = ref(false);
 const isHistoryLoading = ref(false);
 const isCreatingSession = ref(false);
 const connectionStatus = ref<ConnectionStatus>("disconnected");
+const showConnectionForm = ref(true);
+const gatewayToken = ref("");
+const connectionError = ref("");
 const activeCommandIndex = ref(0);
 const isCommandPaletteDismissed = ref(false);
 
@@ -344,31 +386,7 @@ const isUserScrolling = ref(false);
 const resizeObserverRef = ref<ResizeObserver | null>(null);
 
 const SCROLL_THRESHOLD = 80;
-const DEFAULT_CHAT_WS_PORT =
-  import.meta.env.VITE_CHATBOT_WS_PORT?.trim() || "18789";
-const AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN?.trim() || "";
-
-const resolveSocketUrl = () => {
-  const configuredUrl = import.meta.env.VITE_CHATBOT_URL?.trim();
-
-  if (configuredUrl && configuredUrl !== "/") {
-    if (configuredUrl.startsWith("/")) {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      return `${protocol}://${window.location.host}${configuredUrl}`;
-    }
-
-    return configuredUrl;
-  }
-
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const hostname = window.location.hostname.includes(":")
-    ? `[${window.location.hostname}]`
-    : window.location.hostname;
-
-  return `${protocol}://${hostname}:${DEFAULT_CHAT_WS_PORT}/`;
-};
-
-const WS_URL = resolveSocketUrl();
+const GATEWAY_STORAGE_KEY = "openclaw.gateway.connection";
 
 let throttledHandleScroll: ((event: Event) => void) | null = null;
 let chatService: WebSocketChatService | null = null;
@@ -437,6 +455,7 @@ const displaySessionGroups = computed<ChatSessionGroup[]>(() => {
     sessions: grouped,
   }));
 });
+
 const commandQuery = computed(() => {
   const normalizedValue = inputKeywords.value.trimStart();
 
@@ -446,6 +465,7 @@ const commandQuery = computed(() => {
 
   return normalizedValue.slice(1).toLowerCase();
 });
+
 const commandOptions = computed<CommandOption[]>(() => {
   return CHAT_COMMAND_DEFINITIONS.map((option: ChatCommandDefinition) => ({
     ...option,
@@ -453,12 +473,7 @@ const commandOptions = computed<CommandOption[]>(() => {
     description: t(option.descriptionKey),
   }));
 });
-const filteredCommandOptions = computed<CommandOption[]>(() => {
-  return filteredCommandGroups.value.flatMap((group) => group.commands);
-});
-const activeCommand = computed(() => {
-  return filteredCommandOptions.value[activeCommandIndex.value] || null;
-});
+
 const filteredCommandGroups = computed(() => {
   const query = commandQuery.value;
   const matchedCommands = commandOptions.value.filter((option) => {
@@ -478,6 +493,15 @@ const filteredCommandGroups = computed(() => {
     commands: matchedCommands.filter((option) => option.category === category),
   })).filter((group) => group.commands.length > 0);
 });
+
+const filteredCommandOptions = computed<CommandOption[]>(() => {
+  return filteredCommandGroups.value.flatMap((group) => group.commands);
+});
+
+const activeCommand = computed(() => {
+  return filteredCommandOptions.value[activeCommandIndex.value] || null;
+});
+
 const showCommandPalette = computed(() => {
   return (
     !isCommandPaletteDismissed.value &&
@@ -546,10 +570,11 @@ const syncSessionFromRoute = async () => {
     return;
   }
 
-  if (
-    selectedSessionKey.value === nextSessionKey &&
-    routeSessionKey.value === nextSessionKey
-  ) {
+  if (selectedSessionKey.value === nextSessionKey) {
+    if (routeSessionKey.value !== nextSessionKey) {
+      await updateRouteSession(nextSessionKey);
+    }
+
     return;
   }
 
@@ -691,28 +716,6 @@ const handleEnterPress = (event: KeyboardEvent) => {
 
   event.preventDefault();
   void handleSendMessage();
-};
-
-const handleComposerKeydown = (event: KeyboardEvent) => {
-  switch (event.key) {
-    case "Enter":
-      handleEnterPress(event);
-      return;
-    case "ArrowUp":
-      handleCommandArrow("up", event);
-      return;
-    case "ArrowDown":
-      handleCommandArrow("down", event);
-      return;
-    case "Tab":
-      handleCommandTab(event);
-      return;
-    case "Escape":
-      handleCommandEscape(event);
-      return;
-    default:
-      return;
-  }
 };
 
 const handleSendFollowup = (question?: string) => {
@@ -898,6 +901,7 @@ watch(commandQuery, () => {
 
 onUnmounted(() => {
   chatService?.disconnect();
+  chatService = null;
 
   if (scrollContainer.value && throttledHandleScroll) {
     scrollContainer.value.removeEventListener("scroll", throttledHandleScroll);
@@ -906,10 +910,28 @@ onUnmounted(() => {
   resizeObserverRef.value?.disconnect();
 });
 
-onMounted(() => {
-  chatService = new WebSocketChatService({
-    url: WS_URL,
-    authToken: AUTH_TOKEN,
+const connectGateway = () => {
+  if (connectionStatus.value === "connecting") return;
+  const token = gatewayToken.value.trim();
+  if (!token) {
+    showConnectionForm.value = true;
+    connectionError.value = t("chat.gateway.tokenRequired");
+    return;
+  }
+
+  const proxyUrl = new URL("/ws", window.location.href);
+  proxyUrl.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+  chatService?.disconnect();
+  connectionStatus.value = "disconnected";
+  connectionError.value = "";
+  messagesList.value = [];
+  sessions.value = [];
+  sessionGroups.value = [];
+  selectedSessionKey.value = "";
+  const service = new WebSocketChatService({
+    url: proxyUrl.toString(),
+    authToken: token,
     onMessagesChange: (messages: ChatMessageView[]) => {
       messagesList.value = messages;
     },
@@ -927,14 +949,51 @@ onMounted(() => {
       isStreaming.value = streaming;
     },
     onStatusChange: (status: ConnectionStatus) => {
+      if (chatService !== service) return;
       connectionStatus.value = status;
+      if (status === "connected") {
+        try {
+          sessionStorage.setItem(
+            GATEWAY_STORAGE_KEY,
+            JSON.stringify({ token }),
+          );
+        } catch {
+          message.warning(t("chat.gateway.storageUnavailable"));
+        }
+        connectionError.value = "";
+        showConnectionForm.value = false;
+      } else if (status === "disconnected") {
+        showConnectionForm.value = true;
+        connectionError.value ||= t("chat.gateway.connectionFailed");
+      }
     },
     onError: (errorMessage: string) => {
-      message.error(errorMessage);
+      if (chatService !== service) return;
+      if (connectionStatus.value === "connecting" || showConnectionForm.value) {
+        connectionError.value =
+          errorMessage || t("chat.gateway.connectionFailed");
+      } else {
+        message.error(errorMessage);
+      }
     },
   });
+  chatService = service;
+  service.connect();
+};
 
-  chatService.connect();
+onMounted(() => {
+  try {
+    const saved = JSON.parse(
+      sessionStorage.getItem(GATEWAY_STORAGE_KEY) || "null",
+    );
+    if (typeof saved?.token === "string" && saved.token.trim()) {
+      gatewayToken.value = saved.token;
+      showConnectionForm.value = false;
+      connectGateway();
+    }
+  } catch {
+    showConnectionForm.value = true;
+  }
 });
 </script>
 
@@ -1055,10 +1114,6 @@ onMounted(() => {
   gap: 8px;
   min-width: 220px;
   max-width: 280px;
-  max-height: min(60vh, 520px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px;
 }
 
 .session-history-title {
@@ -1191,17 +1246,18 @@ onMounted(() => {
   max-height: calc(100vh - 300px);
 
   .intel-markdown {
-    width: 85%;
-    max-width: 1000px;
-    padding: 0 20px;
+    width: 100%;
+    max-width: 960px;
+    padding: 0 24px;
+    box-sizing: border-box;
   }
 }
 
 .initial-input {
-  width: 85%;
+  width: 100%;
   max-width: 960px;
   flex-shrink: 0;
-  padding: 0 20px;
+  padding: 0 24px;
 
   .welcome-card {
     text-align: left;
@@ -1233,15 +1289,17 @@ onMounted(() => {
 
   .welcome-title {
     margin-top: 14px;
+    max-width: 760px;
     font-size: 34px;
     line-height: 1.08;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--font-main-color);
     letter-spacing: -0.03em;
   }
 
   .welcome-description {
     margin-top: 12px;
+    max-width: 720px;
     font-size: var(--font-size-15);
     line-height: 1.7;
     color: var(--font-text-color);
@@ -1271,16 +1329,24 @@ onMounted(() => {
 }
 
 .input-wrap {
-  width: 85%;
+  width: 100%;
   max-width: 960px;
   position: relative;
   box-sizing: border-box;
-  padding: 0 20px 12px;
+  padding: 0 24px 12px;
   flex-shrink: 0;
 
   .composer-copy {
     margin-bottom: 14px;
     padding: 0 4px;
+  }
+
+  .composer-title {
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: var(--font-main-color);
+    letter-spacing: -0.02em;
   }
 
   .composer-hint {
@@ -1484,7 +1550,7 @@ onMounted(() => {
   .composer-title {
     font-size: 20px;
     line-height: 1.2;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--font-main-color);
     letter-spacing: -0.02em;
   }
@@ -1559,8 +1625,8 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .common-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   .vertical-center;
   border-radius: 10px;
   cursor: pointer;
@@ -1606,7 +1672,6 @@ onMounted(() => {
   }
 
   .message-box .intel-markdown {
-    width: 100%;
     padding: 0 12px;
   }
 

@@ -1,7 +1,6 @@
 // Copyright (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// 知识库摘要（左侧列表）
 export interface KnowledgeBaseSummary {
   id: string;
   name: string;
@@ -9,16 +8,14 @@ export interface KnowledgeBaseSummary {
   updatedAt: string;
 }
 
-// 文档条目
 export interface DocumentItem {
   id: string;
   name: string;
-  type: string; // 例如 'csv', 'pdf', 'docx'
-  size: string; // 文件大小，如 "1.2 MB"
+  type: string;
+  size: string;
   updatedAt: string;
 }
 
-// 知识库详情（右侧完整信息）
 export interface KnowledgeBaseDetail {
   id: string;
   name: string;

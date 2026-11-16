@@ -31,5 +31,6 @@ RTSP Source → StreamManager (OpenCV/Circular Buffer)
 - [Overview](./docs/user-guide/index.md) - Features and architecture
 - [System Requirements](./docs/user-guide/get-started/system-requirements.md) - Hardware and software needs
 - [Build from Source](./docs/user-guide/get-started/build-from-source.md) - Custom build instructions
-- [Release Notes](./docs/user-guide/release-notes.md) - Changelog and known issues
 - [API Reference](./docs/user-guide/api-reference.md) - REST API endpoints
+- [Known Issues](./docs/user-guide/known-issues.md) - Common issues and fixes
+- [Release Notes](./docs/user-guide/release-notes.md) - Changelog

@@ -49,7 +49,7 @@ bash scripts/setup_env.sh --force
 This script sets these important values:
 
 | Variable | Default | Purpose |
-|----------|---------|--------|
+| -------- | ------- | ------ |
 | `HOST_IP` | *(auto-detected)* | Host address advertised to browsers on other machines for WebRTC media. Not needed when the browser runs on the same host. |
 | `REGISTRY` | `intel/` | Image registry prefix. |
 | `TAG` | `2026.3.0-rc1` | Docker image tag. |
@@ -167,6 +167,7 @@ http://localhost:4173
 
 From another machine on the network, use `http://<HOST_IP>:4173` instead.
 
+> [!NOTE]
 > **Offline / air-gapped use:** after the images, models, and videos are downloaded, the application runs without Internet or LAN access. Open `http://localhost:4173` on the host itself; no network configuration is required.
 
 Then:
