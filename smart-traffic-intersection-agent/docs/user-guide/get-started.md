@@ -20,7 +20,7 @@ traffic data streaming, or use the included broker.
 terminal. If you are new to Docker, see [Docker Documentation](https://docs.docker.com/) for
 an introduction.
 - **Hugging Face authentication (conditional)**: Public, ungated models such as
-`OpenVINO/Phi-3.5-vision-instruct-int8-ov` require no Hugging Face account or token.
+`OpenVINO/Qwen3.5-2B-int4-ov` require no Hugging Face account or token.
 You can skip account registration and token setup when using these models. If you choose a
 gated or private model, obtain the necessary model access and set an authorized token using
 `export HUGGINGFACE_TOKEN="<your-huggingface-token>"` before running setup.
@@ -53,26 +53,36 @@ cd smart-traffic-intersection-agent/
 ### 2. Set the required environment variables
 
 Model selection is the user's responsibility. No VLM model is selected automatically.
-Choose a supported model from the table below and replace `<supported_model_name>` with
+Choose a model from the table below and replace `<model_id>` with
 its identifier before running setup:
 
 ```bash
-export VLM_MODEL_NAME="<supported_model_name>"
+export VLM_MODEL_NAME="<model_id>"
 ```
 
-Setup rejects an unset or empty `VLM_MODEL_NAME`. The application has been validated
-with the following models:
+Setup rejects an unset or empty `VLM_MODEL_NAME`. The following selection of models
+from the [OpenVINO Visual Language Models collection](https://huggingface.co/collections/OpenVINO/visual-language-models)
+was checked on November 17, 2026. All listed repositories are public, ungated, and contain
+pre-converted OpenVINO IR files; no Hugging Face token or local model conversion is required.
 
-| Model | `VLM_MODEL_NAME` |
-|-------|-----------------|
-| Microsoft Phi-3.5 Vision (pre-converted) | `OpenVINO/Phi-3.5-vision-instruct-int8-ov` |
-| Microsoft Phi-3.5 Vision (raw, auto-converted) | `microsoft/Phi-3.5-vision-instruct` |
-| Qwen2-VL 2B (pre-converted) | `OpenVINO/Qwen2-VL-2B-Instruct-int4-ov` |
-| Qwen2-VL 7B (pre-converted) | `OpenVINO/Qwen2-VL-7B-Instruct-int4-ov` |
-| InternVL2 1B (pre-converted) | `OpenVINO/InternVL2-1B-int4-ov` |
+| Model (pre-converted) | `VLM_MODEL_NAME` |
+|----------------------------|-----------------|
+| Qwen3.5 2B (INT4) | [`OpenVINO/Qwen3.5-2B-int4-ov`](https://huggingface.co/OpenVINO/Qwen3.5-2B-int4-ov) |
+| InternVL2 1B (INT4) | [`OpenVINO/InternVL2-1B-int4-ov`](https://huggingface.co/OpenVINO/InternVL2-1B-int4-ov) |
+| Microsoft Phi-3.5 Vision (INT8) | [`OpenVINO/Phi-3.5-vision-instruct-int8-ov`](https://huggingface.co/OpenVINO/Phi-3.5-vision-instruct-int8-ov) |
+
+> [!IMPORTANT]
+> Repository availability does not imply end-to-end validation with this application.
+> Check the model card and your deployed OpenVINO Model Server (OVMS)/OpenVINO GenAI
+> version for architecture and target-device support before deployment; newer models may
+> require a newer runtime. Choose a size that fits available memory.
+> Public, ungated access does not remove the model's license obligations.
 
 > [!NOTE]
-> Both pre-converted OpenVINO models (under the `OpenVINO/` namespace on Hugging Face) and raw Hugging Face VLM models (for example, `microsoft/Phi-3.5-vision-instruct`) are supported. Raw models are automatically downloaded and converted to OpenVINO format during setup.
+> Setup accepts both pre-converted OpenVINO models (under the `OpenVINO/` namespace on
+> Hugging Face) and raw Hugging Face VLM models. Raw models require automatic download
+> and conversion during setup, and are not included in the pre-converted list above.
+> In either case, the model architecture must be supported by the deployed runtime.
 
 > [!IMPORTANT]
 > See this [disclaimer](#disclaimer-for-using-third-party-ai-models) before using any AI Model.
@@ -189,14 +199,15 @@ locations on the same machine for `n` required instances.
    > [!TIP]
    > Leave `agent_backend_port` and `agent_ui_port` empty to avoid port conflicts. Random ports would be assigned and application URLs with assigned ports will be shown when setup finishes.
 
-3. Choose a supported model and set the required environment variable.
+3. Choose a model and set the required environment variable.
 
    ```bash
-   export VLM_MODEL_NAME="<supported_model_name>" # eg. OpenVINO/Phi-3.5-vision-instruct-int8-ov, OpenVINO/Qwen2-VL-2B-Instruct-int4-ov
+   export VLM_MODEL_NAME="<model_id>" # e.g. OpenVINO/Qwen3.5-2B-int4-ov
    ```
 
    > [!NOTE]
-   > See [supported models](#2-set-the-required-environment-variables) for the full list of supported VLM models, including Microsoft Phi, Qwen, and InternVL2.
+   > See [model selection](#2-set-the-required-environment-variables) for public, ungated,
+   > pre-converted VLM options and runtime compatibility considerations.
 
    > [!IMPORTANT]
    > See this [disclaimer](#disclaimer-for-using-third-party-ai-models) before using any AI Model.
@@ -237,14 +248,15 @@ locations on the same machine for `n` required instances.
    > [!TIP]
    > Leave `agent_backend_port` and `agent_ui_port` empty to avoid port conflicts. Random ports would be assigned and application URLs with assigned ports will be shown when setup finishes.
 
-3. Choose a supported model and set the required environment variable.
+3. Choose a model and set the required environment variable.
 
    ```bash
-   export VLM_MODEL_NAME="<supported_model_name>" # eg. OpenVINO/Phi-3.5-vision-instruct-int8-ov, OpenVINO/Qwen2-VL-2B-Instruct-int4-ov
+   export VLM_MODEL_NAME="<model_id>" # e.g. OpenVINO/Qwen3.5-2B-int4-ov
    ```
 
    > [!NOTE]
-   > See [supported models](#2-set-the-required-environment-variables) for the full list of supported VLM models, including Microsoft Phi, Qwen, and InternVL2.
+   > See [model selection](#2-set-the-required-environment-variables) for public, ungated,
+   > pre-converted VLM options and runtime compatibility considerations.
 
    > [!IMPORTANT]
    > See this [disclaimer](#disclaimer-for-using-third-party-ai-models) before using any AI Model.
@@ -379,12 +391,12 @@ volumes and secrets can cause failures. Clean up old containers and re-run setup
 
 ```bash
 source setup.sh --clean --keep-models
-export VLM_MODEL_NAME="<supported_model_name>"
+export VLM_MODEL_NAME="<model_id>"
 source setup.sh --setup
 ```
 
 The `--keep-models` flag preserves downloaded VLM model files so they don't need to be
-re-downloaded. Replace `<supported_model_name>` with your chosen model's identifier;
+re-downloaded. Replace `<model_id>` with your chosen model's identifier;
 use the previous model's identifier to reuse its cache.
 
 > [!IMPORTANT]
