@@ -60,10 +60,10 @@ its identifier before running setup:
 export VLM_MODEL_NAME="<model_id>"
 ```
 
-Setup rejects an unset or empty `VLM_MODEL_NAME`. The following selection of models
-from the [OpenVINO Visual Language Models collection](https://huggingface.co/collections/OpenVINO/visual-language-models)
-was checked on November 17, 2026. All listed repositories are public, ungated, and contain
-pre-converted OpenVINO IR files; no Hugging Face token or local model conversion is required.
+Setup rejects an unset or empty `VLM_MODEL_NAME`. Check the list of supported models
+from [OpenVINO Visual Language Models collection](https://huggingface.co/collections/OpenVINO/visual-language-models).
+All listed repositories are public, ungated, and contain pre-converted OpenVINO IR files;
+no Hugging Face token or local model conversion is required.
 
 | Model (pre-converted) | `VLM_MODEL_NAME` |
 |----------------------------|-----------------|
