@@ -11,7 +11,7 @@ services:
     # Pulled from the EAL agent-quality-handler microservice — no longer
     # built from this repo. See services/agent-service (removed) history
     # for the prior in-repo implementation this replaced.
-    image: ${REGISTRY:-intel/}agent-quality-handler:${TAG:-2026.3.0-rc1}
+    image: ${REGISTRY:-intel/}agent-quality-handler:${AGENT_QUALITY_HANDLER_TAG:-2026.3.0-rc1}
     container_name: apm-agent
     hostname: apm-agent
     environment:

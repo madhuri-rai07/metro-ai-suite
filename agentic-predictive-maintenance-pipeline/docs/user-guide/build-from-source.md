@@ -30,7 +30,7 @@ Set the registry URL and tag for the images you want to build. If you leave `REG
 
 ```bash
 export REGISTRY=            # e.g. "docker.io/myusername/" — leave empty for local builds
-export TAG=2026.3.0-rc1
+export TAG=2026.3.0-rc2
 ```
 
 ### 3. Build the Images
@@ -57,6 +57,9 @@ The reasoning agent (`apm-agent`) is no longer built from this repo — it is
 an external image (Intel EAL's `agent-quality-handler` microservice) pulled
 via `docker/compose.agents.yaml`. See the [agent-service integration
 guide](https://docs.openedgeplatform.intel.com/2026.3/edge-ai-libraries/agent-quality-handler/agent-service-integration-guide.html) for its contract.
+
+`TAG` controls only the three APM application images. The external agent image
+uses `AGENT_QUALITY_HANDLER_TAG` (default: `2026.3.0-rc1`) independently.
 
 ### 4. Verify the Build
 

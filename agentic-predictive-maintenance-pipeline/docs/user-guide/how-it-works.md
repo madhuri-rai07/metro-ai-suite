@@ -478,7 +478,7 @@ curl http://localhost:8080/api/agents/results/$RUN_ID | python3 -m json.tool
 | UI shows no runs | `curl http://localhost:8080/api/detection/runs` and `curl http://localhost:8080/api/agents/runs` — is the NGINX proxy, detection-service, or agent-service reachable? |
 | LLM/OpenVINO model server service is unhealthy | Use `LLM_MODE=fallback` to bypass the LLM service for testing |
 | `apm-storage` unhealthy | `docker logs apm-storage` and `curl http://localhost:8080/api/storage/health` |
-| `apm-agent` unhealthy or unreachable | `docker logs apm-agent` — it is an externally pulled image (not built from this repo); confirm `REGISTRY`/`TAG` resolve to a real published image |
+| `apm-agent` unhealthy or unreachable | `docker logs apm-agent` — it is an externally pulled image (not built from this repo); confirm `REGISTRY`/`AGENT_QUALITY_HANDLER_TAG` resolve to a real published image |
 
 For data preparation (creating a source video under `resources/videos/`):
 
